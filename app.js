@@ -285,7 +285,7 @@ async function loadCloudBooks() {
     }
     state.books = data.map((row) => row.payload).filter(Boolean);
     renderCatalog();
-    renderAdminBooks();
+    renderAdminList();
     cloud.ready = true;
     cloud.error = "";
     saveState();
