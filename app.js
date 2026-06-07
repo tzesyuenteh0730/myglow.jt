@@ -1,6 +1,8 @@
 const STORAGE_KEY = "book-nook-shop-state-v1";
 const ADMIN_SESSION_KEY = "myglow-admin-session-until";
 const ADMIN_SESSION_MS = 24 * 60 * 60 * 1000;
+const CUSTOMER_SESSION_KEY = "myglow-customer-session-v1";
+const CUSTOMER_CART_PREFIX = "myglow-customer-cart-";
 const money = new Intl.NumberFormat("en-MY", { style: "currency", currency: "MYR" });
 
 const demoBooks = [
@@ -50,6 +52,7 @@ const demoBooks = [
 
 let state = loadState();
 let currentOrder = null;
+let customerSession = loadCustomerSession();
 let activeSection = "inventory";
 let appMode = "customer";
 let pendingCoverImage = "";
@@ -95,6 +98,14 @@ const els = {
   transferDetailsInput: document.querySelector("#transferDetailsInput"),
   receiptPreview: document.querySelector("#receiptPreview"),
   customerCloudStatus: document.querySelector("#customerCloudStatus"),
+  customerAccountStatus: document.querySelector("#customerAccountStatus"),
+  customerAccountForm: document.querySelector("#customerAccountForm"),
+  customerEmailInput: document.querySelector("#customerEmailInput"),
+  customerPasswordInput: document.querySelector("#customerPasswordInput"),
+  customerLoginBtn: document.querySelector("#customerLoginBtn"),
+  customerSignupBtn: document.querySelector("#customerSignupBtn"),
+  customerLogoutBtn: document.querySelector("#customerLogoutBtn"),
+  customerOrdersList: document.querySelector("#customerOrdersList"),
   bookForm: document.querySelector("#bookForm"),
   bookId: document.querySelector("#bookId"),
   coverDataInput: document.querySelector("#coverDataInput"),
@@ -183,6 +194,183 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function loadCustomerSession() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOMER_SESSION_KEY) || "null");
+    if (!saved?.access_token || !saved?.user?.email) return null;
+    if (saved.expires_at && saved.expires_at * 1000 <= Date.now()) {
+      localStorage.removeItem(CUSTOMER_SESSION_KEY);
+      return null;
+    }
+    return saved;
+  } catch {
+    localStorage.removeItem(CUSTOMER_SESSION_KEY);
+    return null;
+  }
+}
+
+function customerEmail() {
+  return customerSession?.user?.email || "";
+}
+
+function customerCartKey() {
+  return customerEmail() ? `${CUSTOMER_CART_PREFIX}${customerEmail().toLowerCase()}` : "";
+}
+
+function saveCustomerSession(session) {
+  customerSession = session;
+  localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(session));
+}
+
+function clearCustomerSession() {
+  customerSession = null;
+  localStorage.removeItem(CUSTOMER_SESSION_KEY);
+}
+
+async function authRequest(path, body) {
+  if (!cloud.enabled) throw new Error("Supabase is not configured yet.");
+  const response = await fetch(`${cloud.url}/auth/v1/${path}`, {
+    method: "POST",
+    headers: {
+      apikey: cloud.anonKey,
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) {
+    throw new Error(data?.msg || data?.message || text || `Account request failed (${response.status})`);
+  }
+  return data;
+}
+
+async function customerCloudRequest(path, options = {}) {
+  if (!cloud.enabled || !customerSession?.access_token) throw new Error("Customer is not logged in.");
+  const response = await fetch(`${cloud.url}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      apikey: cloud.anonKey,
+      authorization: `Bearer ${customerSession.access_token}`,
+      "content-type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) {
+    throw new Error(data?.message || text || `Customer cloud request failed (${response.status})`);
+  }
+  return data;
+}
+
+function saveCustomerCartLocal() {
+  const key = customerCartKey();
+  if (!key) return;
+  localStorage.setItem(key, JSON.stringify({ cart: state.cart, updatedAt: new Date().toISOString() }));
+}
+
+async function saveCustomerCartCloud() {
+  if (!customerSession?.user?.id) return;
+  await customerCloudRequest("customer_carts?on_conflict=user_id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({
+      user_id: customerSession.user.id,
+      email: customerEmail(),
+      payload: { cart: state.cart },
+      updated_at: new Date().toISOString()
+    })
+  });
+}
+
+function persistCustomerCart() {
+  if (!customerSession) return;
+  saveCustomerCartLocal();
+  saveCustomerCartCloud().catch((error) => {
+    console.warn("Customer cart cloud save failed:", error);
+  });
+}
+
+async function restoreCustomerCart() {
+  if (!customerSession) return;
+  const key = customerCartKey();
+  const localCart = JSON.parse(localStorage.getItem(key) || "null");
+  if (localCart?.cart?.length) {
+    state.cart = normalizeCart(localCart.cart);
+  }
+  try {
+    const rows = await customerCloudRequest(`customer_carts?select=payload&user_id=eq.${encodeURIComponent(customerSession.user.id)}&limit=1`);
+    const cloudCart = rows?.[0]?.payload?.cart;
+    if (Array.isArray(cloudCart)) {
+      state.cart = normalizeCart(cloudCart);
+      saveCustomerCartLocal();
+    }
+  } catch (error) {
+    console.warn("Customer cart cloud load failed:", error);
+  }
+  saveState();
+  renderCart();
+  renderCustomerAccount();
+}
+
+function normalizeCart(cart) {
+  return (cart || []).filter((line) => getVariant(getBook(line.bookId), line.variantId)).map((line) => ({
+    bookId: line.bookId,
+    variantId: line.variantId,
+    qty: Math.max(1, Number.parseInt(line.qty, 10) || 1)
+  }));
+}
+
+async function signupCustomer() {
+  const email = els.customerEmailInput.value.trim();
+  const password = els.customerPasswordInput.value;
+  if (!email || password.length < 6) {
+    alert("Please enter an email and password with at least 6 characters.");
+    return;
+  }
+  try {
+    const session = await authRequest("signup", { email, password });
+    if (session?.access_token) {
+      saveCustomerSession(session);
+      persistCustomerCart();
+      await restoreCustomerCart();
+    } else {
+      els.customerAccountStatus.textContent = "Account created. Please check your email, then log in.";
+    }
+    renderCustomerAccount();
+  } catch (error) {
+    alert(`Create account failed: ${error.message}`);
+  }
+}
+
+async function loginCustomer() {
+  const email = els.customerEmailInput.value.trim();
+  const password = els.customerPasswordInput.value;
+  if (!email || !password) {
+    alert("Please enter your email and password.");
+    return;
+  }
+  try {
+    const session = await authRequest("token?grant_type=password", { email, password });
+    saveCustomerSession(session);
+    await restoreCustomerCart();
+    renderCustomerAccount();
+  } catch (error) {
+    alert(`Login failed: ${error.message}`);
+  }
+}
+
+function logoutCustomer() {
+  persistCustomerCart();
+  clearCustomerSession();
+  state.cart = [];
+  currentOrder = null;
+  els.paymentPanel.hidden = true;
+  saveState();
+  render();
+}
+
 
 function initSupabase() {
   const config = window.MYGLOW_SUPABASE || {};
@@ -268,6 +456,7 @@ async function loadCloudOrders() {
     cloud.error = "";
     saveState();
     renderOrders();
+    renderCustomerOrders();
     setCloudStatus("Cloud synced", true);
   } catch (error) {
     cloud.ready = false;
@@ -436,6 +625,7 @@ function render() {
   renderCart();
   renderAdminList();
   renderOrders();
+  renderCustomerAccount();
 }
 
 function renderMode() {
@@ -444,6 +634,14 @@ function renderMode() {
   document.body.classList.toggle("lock-mode", appMode === "lock");
   els.adminLockPanel.hidden = appMode !== "lock";
   els.customerViewBtn.classList.toggle("active", appMode === "customer");
+}
+
+function variationPriceRange(book) {
+  const prices = (book.variants || []).map((variant) => Number(variant.price)).filter(Number.isFinite);
+  if (!prices.length) return "Price not set";
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+  return low === high ? formatPrice(low) : `${formatPrice(low)} - ${formatPrice(high)}`;
 }
 
 function renderCatalog() {
@@ -475,9 +673,9 @@ function renderCatalog() {
       <div class="book-body">
         <div>
           <button class="book-title-link" type="button" data-open-detail="${book.id}">${escapeHtml(book.title)}</button>
-          <p class="meta">${escapeHtml(book.author)} · ${escapeHtml(book.category || "General")}</p>
+          <p class="meta">${escapeHtml(book.author)}</p>
         </div>
-        <p class="description">${escapeHtml(book.description || "No description yet.")}</p>
+        <p class="price-range">${variationPriceRange(book)}</p>
         <button class="secondary-button wide" type="button" data-open-detail="${book.id}">View details</button>
       </div>
     `;
@@ -504,10 +702,14 @@ function renderCart() {
     if (!book || !variant) return;
     const item = document.createElement("div");
     item.className = "cart-line";
+    const image = variant.photo || book.cover || "";
     item.innerHTML = `
-      <div>
-        <strong>${escapeHtml(book.title)}</strong>
-        <span>${escapeHtml(variant.label)} · ${formatPrice(variant.price)}</span>
+      <div class="cart-line-main">
+        <div class="cart-thumb">${image ? `<img src="${escapeAttr(image)}" alt="${escapeAttr(variant.label)}">` : `<span>${escapeHtml(book.title.slice(0, 1).toUpperCase())}</span>`}</div>
+        <div>
+          <strong>${escapeHtml(book.title)}</strong>
+          <span>${escapeHtml(variant.label)} · ${formatPrice(variant.price)}</span>
+        </div>
       </div>
       <input type="number" min="1" max="${variant.stock}" value="${line.qty}" data-cart-qty="${line.bookId}:${line.variantId}" aria-label="Cart quantity">
       <button class="icon-button" type="button" data-remove-cart="${line.bookId}:${line.variantId}" aria-label="Remove ${escapeAttr(book.title)}">×</button>
@@ -675,6 +877,7 @@ function addToCart(bookId, variantId = null, quantity = null) {
   els.paymentPanel.hidden = true;
   resetPaymentProof();
   render();
+  persistCustomerCart();
 }
 
 function openBookDetail(bookId) {
@@ -710,7 +913,7 @@ function openBookDetail(bookId) {
               <input type="radio" name="detailVariant" value="${variant.id}" ${variant.id === firstAvailable?.id ? "checked" : ""} ${variant.stock <= 0 ? "disabled" : ""}>
               <span>
                 <strong>${escapeHtml(variant.label)}</strong>
-                <small>${escapeHtml(variant.sku || "No SKU")} · ${variant.stock} left</small>
+                <small>${variant.sku ? `${escapeHtml(variant.sku)} · ` : ""}${variant.stock} left</small>
               </span>
               <b>${formatPrice(variant.price)}</b>
             </label>
@@ -814,6 +1017,8 @@ async function markPaid() {
     paidAt: createdAt,
     paymentDetails: els.transferDetailsInput.value.trim(),
     receipt: pendingReceipt ? structuredClone(pendingReceipt) : null,
+    customerEmail: customerEmail(),
+    customerId: customerSession?.user?.id || "",
     lines: state.cart.map((line) => {
       const book = getBook(line.bookId);
       const variant = getVariant(book, line.variantId);
@@ -824,6 +1029,7 @@ async function markPaid() {
         author: book?.author || "",
         variant: variant?.label || "Variation",
         sku: variant?.sku || "",
+        photo: variant?.photo || book?.cover || "",
         price: variant?.price || 0,
         qty: line.qty,
         lineTotal: (variant?.price || 0) * line.qty
@@ -853,6 +1059,39 @@ async function markPaid() {
   alert("Order paid details submitted. Thank you.");
 }
 
+function renderCustomerAccount() {
+  if (!els.customerAccountStatus) return;
+  const loggedIn = Boolean(customerSession?.user?.email);
+  els.customerAccountStatus.textContent = loggedIn
+    ? `Logged in as ${customerEmail()}`
+    : "Log in to save cart and order history";
+  els.customerAccountForm.hidden = loggedIn;
+  els.customerLogoutBtn.hidden = !loggedIn;
+  renderCustomerOrders();
+}
+
+function renderCustomerOrders() {
+  if (!els.customerOrdersList) return;
+  if (!customerSession) {
+    els.customerOrdersList.innerHTML = "";
+    return;
+  }
+  const orders = state.orders.filter((order) => (order.customerEmail || "").toLowerCase() === customerEmail().toLowerCase());
+  if (!orders.length) {
+    els.customerOrdersList.innerHTML = `<p class="empty-state">No order history yet.</p>`;
+    return;
+  }
+  els.customerOrdersList.innerHTML = `
+    <strong>Order history</strong>
+    ${orders.slice(0, 5).map((order) => `
+      <div class="customer-order-row">
+        <span>${escapeHtml(order.code || "Order")}</span>
+        <b>${formatPrice(order.total || 0)}</b>
+      </div>
+    `).join("")}
+  `;
+}
+
 function renderOrders() {
   els.ordersList.innerHTML = "";
   const query = els.ordersSearchInput.value.trim().toLowerCase();
@@ -872,6 +1111,7 @@ function renderOrders() {
       order.paymentDetails,
       order.total,
       order.receipt?.name,
+      order.customerEmail,
       lineText
     ].join(" ").toLowerCase();
     return text.includes(query);
@@ -898,7 +1138,7 @@ function renderOrders() {
       <div class="order-card-head">
         <div>
           <strong>${escapeHtml(order.code || "Order")}</strong>
-          <p>${formatDate(order.createdAt || order.paidAt)} · ${escapeHtml(order.status || "Order paid")}</p>
+          <p>${formatDate(order.createdAt || order.paidAt)} · ${escapeHtml(order.status || "Order paid")}${order.customerEmail ? ` · ${escapeHtml(order.customerEmail)}` : ""}</p>
         </div>
         <strong>${formatPrice(order.total || 0)}</strong>
       </div>
@@ -1197,6 +1437,7 @@ els.cartItems.addEventListener("input", (event) => {
     currentOrder = null;
     els.paymentPanel.hidden = true;
     render();
+    persistCustomerCart();
   }
 });
 
@@ -1208,6 +1449,7 @@ els.cartItems.addEventListener("click", (event) => {
   currentOrder = null;
   els.paymentPanel.hidden = true;
   render();
+  persistCustomerCart();
 });
 
 els.adminList.addEventListener("click", (event) => {
@@ -1309,6 +1551,12 @@ els.newBookBtn.addEventListener("click", () => {
 els.searchInput.addEventListener("input", renderCatalog);
 els.inventorySearchInput.addEventListener("input", renderAdminList);
 els.ordersSearchInput.addEventListener("input", renderOrders);
+els.customerLoginBtn.addEventListener("click", loginCustomer);
+els.customerSignupBtn.addEventListener("click", signupCustomer);
+els.customerLogoutBtn.addEventListener("click", logoutCustomer);
+els.customerPasswordInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") loginCustomer();
+});
 if (els.refreshOrdersBtn) {
   els.refreshOrdersBtn.addEventListener("click", async () => {
     await loadCloudStore();
@@ -1404,6 +1652,7 @@ async function boot() {
   renderPaymentSetup();
   render();
   await loadCloudStore();
+  await restoreCustomerCart();
   render();
 }
 

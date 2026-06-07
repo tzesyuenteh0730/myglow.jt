@@ -65,6 +65,22 @@
           </div>
           <output id="cartCount" class="pill">0 items</output>
         </div>
+        <div class="customer-account" id="customerAccountPanel">
+          <div class="account-head">
+            <div>
+              <p class="eyebrow">Customer account</p>
+              <strong id="customerAccountStatus">Log in to save cart and order history</strong>
+            </div>
+            <button class="ghost-button" id="customerLogoutBtn" type="button" hidden>Log out</button>
+          </div>
+          <div class="account-form" id="customerAccountForm">
+            <input id="customerEmailInput" type="email" autocomplete="email" placeholder="Email">
+            <input id="customerPasswordInput" type="password" autocomplete="current-password" placeholder="Password">
+            <button class="secondary-button" id="customerLoginBtn" type="button">Log in</button>
+            <button class="ghost-button" id="customerSignupBtn" type="button">Create account</button>
+          </div>
+          <div class="customer-orders" id="customerOrdersList"></div>
+        </div>
         <div id="cartItems" class="cart-items"></div>
         <div class="cart-total">
           <span>Total</span>
