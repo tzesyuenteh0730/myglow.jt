@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>myglow.jt</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Bookstore dashboard</p>
+        <h1 id="brandAdminTrigger" tabindex="0">myglow.jt</h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="secondary-button admin-only" id="customerViewBtn" type="button">Customer shop</button>
+        <button class="icon-button admin-only" id="resetDemoBtn" type="button" title="Reset demo data" aria-label="Reset demo data">
+          <span aria-hidden="true">↻</span>
+        </button>
+        <button class="secondary-button admin-only" data-section-target="inventory" type="button">Manage inventory</button>
+        <button class="secondary-button admin-only" data-section-target="payment" type="button">Payment setup</button>
+        <button class="secondary-button admin-only" data-section-target="orders" type="button">Orders</button>
+        <button class="primary-button admin-only" id="newBookBtn" type="button">New book</button>
+        <button class="ghost-button admin-only" id="logoutAdminBtn" type="button">Lock admin</button>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="panel admin-lock-panel" id="adminLockPanel" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Private access</p>
+            <h2>Admin unlock</h2>
+          </div>
+        </div>
+        <div class="unlock-form">
+          <label>
+            <span>Admin passcode</span>
+            <input id="adminPassInput" type="password" autocomplete="current-password" placeholder="Enter passcode">
+          </label>
+          <button class="primary-button" id="unlockAdminBtn" type="button">Unlock admin</button>
+        </div>
+        <p class="hint">Private owner area.</p>
+      </section>
+
+      <section class="panel catalog-panel customer-area" aria-labelledby="catalogTitle">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Shopfront</p>
+            <h2 id="catalogTitle">Books for sale</h2>
+          </div>
+          <label class="search-box">
+            <span>Search</span>
+            <input id="searchInput" type="search" placeholder="Title, author, category">
+          </label>
+        </div>
+        <div class="catalog-grid" id="catalogGrid"></div>
+      </section>
+
+      <aside class="panel cart-panel customer-area" aria-labelledby="cartTitle">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Checkout</p>
+            <h2 id="cartTitle">Shopping cart</h2>
+          </div>
+          <output id="cartCount" class="pill">0 items</output>
+        </div>
+        <div id="cartItems" class="cart-items"></div>
+        <div class="cart-total">
+          <span>Total</span>
+          <strong id="cartTotal">RM0.00</strong>
+        </div>
+        <button class="primary-button wide" id="checkoutBtn" type="button">Show payment code</button>
+        <div id="paymentPanel" class="payment-panel" hidden>
+          <p class="eyebrow">Payment receive code</p>
+          <output id="customerCloudStatus" class="pill">Checking cloud</output>
+          <img id="checkoutQrImage" class="checkout-qr" alt="Payment QR code" hidden>
+          <div class="receive-code" id="receiveCodeText"></div>
+          <div class="checkout-banks" id="checkoutBankDetails"></div>
+          <div class="payment-lines">
+            <span>Order</span><strong id="orderCodeText"></strong>
+            <span>Amount</span><strong id="orderAmountText"></strong>
+          </div>
+          <div class="payment-proof">
+            <label>
+              <span>Upload bank transfer receipt</span>
+              <input id="receiptFileInput" type="file" accept="image/*,.pdf">
+            </label>
+            <label>
+              <span>Transfer details</span>
+              <textarea id="transferDetailsInput" rows="3" placeholder="Bank used, transfer time, reference number"></textarea>
+            </label>
+            <div class="receipt-preview" id="receiptPreview" hidden></div>
+          </div>
+          <button class="secondary-button wide" id="copyPaymentBtn" type="button">Copy payment details</button>
+          <button class="primary-button wide" id="paidBtn" type="button">Submit order paid</button>
+        </div>
+      </aside>
+
+      <nav class="workspace-nav admin-area" aria-label="Admin sections">
+        <button class="active" data-section-target="inventory" type="button">Manage inventory</button>
+        <button data-section-target="payment" type="button">Payment setup</button>
+        <button data-section-target="orders" type="button">Orders</button>
+      </nav>
+
+      <section class="panel admin-panel admin-area" data-admin-section="inventory" aria-labelledby="adminTitle">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Manage inventory</p>
+            <h2 id="adminTitle">Create, edit, update</h2>
+          </div>
+          <div class="section-actions">
+            <label class="search-box">
+              <span>Search inventory</span>
+              <input id="inventorySearchInput" type="search" placeholder="Book, author, SKU, variation">
+            </label>
+            <button class="secondary-button" id="saveBookBtn" type="button">Save book</button>
+          </div>
+        </div>
+
+        <form id="bookForm" class="book-form">
+          <input id="bookId" type="hidden">
+          <input id="coverDataInput" type="hidden">
+          <div class="form-grid">
+            <label>
+              <span>Book title</span>
+              <input id="titleInput" required placeholder="The Quiet Shelf">
+            </label>
+            <label>
+              <span>Author</span>
+              <input id="authorInput" required placeholder="A. Writer">
+            </label>
+            <label>
+              <span>Category</span>
+              <input id="categoryInput" placeholder="Fiction">
+            </label>
+            <label>
+              <span>Cover image URL</span>
+              <input id="coverInput" type="url" placeholder="Optional">
+            </label>
+            <label>
+              <span>Cover photo upload</span>
+              <input id="coverFileInput" type="file" accept="image/*">
+            </label>
+          </div>
+          <div class="cover-upload-preview">
+            <img id="coverPreview" alt="Book cover preview" hidden>
+            <p id="coverEmptyText">No cover photo selected</p>
+            <button class="ghost-button" id="clearCoverBtn" type="button">Remove cover photo</button>
+          </div>
+          <label>
+            <span>Description</span>
+            <textarea id="descriptionInput" rows="3" placeholder="Short product description"></textarea>
+          </label>
+          <label class="toggle-row">
+            <input id="activeInput" type="checkbox" checked>
+            <span>Visible in shop</span>
+          </label>
+
+          <div class="variant-header">
+            <h3>Variations and prices</h3>
+            <button class="ghost-button" id="addVariantBtn" type="button">Add variation</button>
+          </div>
+          <div id="variantRows" class="variant-rows"></div>
+          <button class="primary-button wide" id="saveBookBottomBtn" type="button">Save book</button>
+        </form>
+
+        <div class="admin-list" id="adminList"></div>
+      </section>
+
+      <section class="panel settings-panel admin-area" data-admin-section="payment" aria-labelledby="settingsTitle" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Payment setup</p>
+            <h2 id="settingsTitle">QR code and bank details</h2>
+          </div>
+          <button class="secondary-button" id="savePaymentBtn" type="button">Save payment setup</button>
+        </div>
+        <div class="payment-setup-grid">
+          <div class="payment-form-stack">
+            <label>
+              <span>Payment receive code shown to buyers</span>
+              <textarea id="paymentCodeInput" rows="4" placeholder="Example: DuitNow: MYGLOWJT-8842"></textarea>
+            </label>
+            <label>
+              <span>QR code photo</span>
+              <input id="qrImageInput" type="file" accept="image/*">
+            </label>
+            <label>
+              <span>QR image URL</span>
+              <input id="qrUrlInput" type="url" placeholder="Optional image link">
+            </label>
+            <button class="ghost-button" id="clearQrBtn" type="button">Remove QR photo</button>
+          </div>
+          <div class="qr-preview-box">
+            <img id="qrPreview" alt="Payment QR preview" hidden>
+            <p id="qrEmptyText">No QR photo yet</p>
+          </div>
+        </div>
+
+        <div class="variant-header bank-header">
+          <h3>Bank details</h3>
+          <button class="ghost-button" id="addBankBtn" type="button">Add bank</button>
+        </div>
+        <div id="bankRows" class="bank-rows"></div>
+        <button class="primary-button wide" id="savePaymentBottomBtn" type="button">Save payment setup</button>
+        <p class="hint">Buyers will see the QR photo, receive code, bank names, account holder names, and account numbers during checkout.</p>
+      </section>
+
+      <section class="panel orders-panel admin-area" data-admin-section="orders" aria-labelledby="ordersTitle" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Admin orders</p>
+            <h2 id="ordersTitle">Order summary</h2>
+          </div>
+          <div class="section-actions">
+            <label class="search-box">
+              <span>Search orders</span>
+              <input id="ordersSearchInput" type="search" placeholder="Order, book, payment, amount">
+            </label>
+            <button class="secondary-button" id="refreshOrdersBtn" type="button">Refresh orders</button>
+            <output id="cloudStatus" class="pill">Local orders</output>
+            <output id="ordersCount" class="pill">0 orders</output>
+          </div>
+        </div>
+        <div id="ordersList" class="orders-list"></div>
+      </section>
+    </main>
+
+    <section class="book-detail-modal" id="bookDetailModal" aria-labelledby="bookDetailTitle" aria-modal="true" role="dialog" hidden>
+      <div class="book-detail-backdrop" data-close-detail></div>
+      <article class="book-detail-panel">
+        <button class="icon-button detail-close" type="button" data-close-detail aria-label="Close book details">×</button>
+        <div id="bookDetailContent"></div>
+      </article>
+    </section>
+
+    <template id="variantTemplate">
+      <div class="variant-row">
+        <input class="variant-photo-data" type="hidden">
+        <input class="variant-label" placeholder="Paperback" aria-label="Variation name">
+        <input class="variant-price" type="number" min="0" step="0.01" placeholder="39.90" aria-label="Price">
+        <input class="variant-stock" type="number" min="0" step="1" placeholder="20" aria-label="Stock">
+        <input class="variant-sku" placeholder="SKU" aria-label="SKU">
+        <label class="variant-photo-upload">
+          <span>Photo</span>
+          <input class="variant-photo-file" type="file" accept="image/*" aria-label="Variation photo">
+        </label>
+        <div class="variant-photo-preview">
+          <img alt="Variation preview" hidden>
+          <span>No photo</span>
+        </div>
+        <button class="icon-button remove-variant" type="button" title="Remove variation" aria-label="Remove variation">×</button>
+      </div>
+    </template>
+
+    <template id="bankTemplate">
+      <div class="bank-row">
+        <input class="bank-name" placeholder="Maybank" aria-label="Bank name">
+        <input class="bank-holder" placeholder="Account holder" aria-label="Account holder">
+        <input class="bank-number" placeholder="Account number" aria-label="Account number">
+        <input class="bank-note" placeholder="Note" aria-label="Payment note">
+        <button class="icon-button remove-bank" type="button" title="Remove bank" aria-label="Remove bank">×</button>
+      </div>
+    </template>
+
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
