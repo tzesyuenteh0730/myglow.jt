@@ -1080,3 +1080,47 @@ body.detail-open {
 .order-customer p {
   margin: 4px 0;
 }
+
+.cart-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.customer-info {
+  order: 1;
+}
+
+.cart-items {
+  order: 2;
+}
+
+.cart-total {
+  order: 3;
+}
+
+#checkoutBtn {
+  order: 4;
+}
+
+#paymentPanel {
+  order: 5;
+}
+
+.customer-info,
+.cart-items,
+#paymentPanel {
+  width: 100%;
+}
+
+.customer-info label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.customer-info input,
+.customer-info textarea {
+  width: 100%;
+}
