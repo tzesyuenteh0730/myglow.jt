@@ -103,16 +103,6 @@ button {
   padding: 18px;
 }
 
-.catalog-panel {
-  min-width: 0;
-}
-
-.cart-panel {
-  position: sticky;
-  top: 16px;
-  align-self: start;
-}
-
 .admin-panel,
 .settings-panel,
 .orders-panel,
@@ -141,14 +131,13 @@ body.admin-mode .cart-panel {
 }
 
 body.admin-mode .catalog-panel {
-  grid-column: 1 / -1;
+  grid-column: auto;
 }
 
 body.lock-mode .admin-lock-panel {
   display: block;
 }
 
-body.lock-mode .customer-area,
 body.lock-mode .admin-area {
   display: none;
 }
@@ -1123,4 +1112,33 @@ body.detail-open {
 .customer-info input,
 .customer-info textarea {
   width: 100%;
+}
+
+.shop-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) 420px;
+  gap: 24px;
+  align-items: start;
+}
+
+.catalog-panel {
+  min-width: 0;
+}
+
+.cart-panel {
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+@media (max-width: 1200px) {
+  .shop-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-panel {
+    position: static;
+    max-height: none;
+  }
 }
