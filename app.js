@@ -1404,11 +1404,24 @@ if (els.refreshOrdersBtn) {
 els.checkoutBtn.addEventListener("click", showPayment);
 els.paidBtn.addEventListener("click", markPaid);
 
-els.receiptFileInput.addEventListener("change", () => {
-  readProofFile(els.receiptFileInput.files?.[0], (receipt) => {
-    pendingReceipt = receipt;
+els.receiptFileInput.addEventListener("change", async () => {
+  const file = els.receiptFileInput.files?.[0];
+
+  if (!file) return;
+
+  try {
+    const receiptUrl = await uploadToStorage(file, "receipts");
+
+    pendingReceipt = {
+      name: file.name,
+      type: file.type,
+      data: receiptUrl
+    };
+
     renderReceiptPreview();
-  });
+  } catch (err) {
+    alert(err.message);
+  }
 });
 
 els.copyPaymentBtn.addEventListener("click", async () => {
@@ -1431,13 +1444,22 @@ els.qrImageInput.addEventListener("change", () => {
   });
 });
 
-els.coverFileInput.addEventListener("change", () => {
-  readImageFile(els.coverFileInput.files?.[0], (image) => {
-    pendingCoverImage = image;
-    els.coverDataInput.value = image;
-    els.coverInput.value = "";
+els.coverFileInput.addEventListener("change", async () => {
+  const file = els.coverFileInput.files?.[0];
+
+  if (!file) return;
+
+  try {
+    const imageUrl = await uploadToStorage(file, "books");
+
+    pendingCoverImage = imageUrl;
+    els.coverDataInput.value = imageUrl;
+    els.coverInput.value = imageUrl;
+
     renderCoverPreview();
-  });
+  } catch (err) {
+    alert(err.message);
+  }
 });
 
 els.coverInput.addEventListener("input", () => {
@@ -1491,3 +1513,25 @@ async function boot() {
 }
 
 boot();
+
+async function uploadToStorage(file, bucket) {
+  const fileName = `${Date.now()}-${file.name}`;
+
+  const response = await fetch(
+    `${cloud.url}/storage/v1/object/${bucket}/${fileName}`,
+    {
+      method: "POST",
+      headers: {
+        apikey: cloud.anonKey,
+        Authorization: `Bearer ${cloud.anonKey}`
+      },
+      body: file
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Upload failed");
+  }
+
+  return `${cloud.url}/storage/v1/object/public/${bucket}/${fileName}`;
+}
