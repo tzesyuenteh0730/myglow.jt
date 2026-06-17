@@ -1354,37 +1354,25 @@ els.adminPassInput.addEventListener("keydown", (event) => {
 });
 let adminPressTimer;
 
-function openAdminLogin() {
-  if (appMode === "admin") return;
+els.brandAdminTrigger.addEventListener("pointerdown", () => {
+  adminPressTimer = setTimeout(() => {
+    switchMode("lock");
 
-  switchMode("lock");
-
-  setTimeout(() => {
-    els.adminPassInput?.focus();
-  }, 100);
-}
-
-els.brandAdminTrigger.addEventListener("mousedown", () => {
-  adminPressTimer = setTimeout(openAdminLogin, 1500);
+    setTimeout(() => {
+      els.adminPassInput?.focus();
+    }, 100);
+  }, 1500);
 });
 
-els.brandAdminTrigger.addEventListener("mouseup", () => {
+els.brandAdminTrigger.addEventListener("pointerup", () => {
   clearTimeout(adminPressTimer);
 });
 
-els.brandAdminTrigger.addEventListener("mouseleave", () => {
+els.brandAdminTrigger.addEventListener("pointerleave", () => {
   clearTimeout(adminPressTimer);
 });
 
-els.brandAdminTrigger.addEventListener("touchstart", () => {
-  adminPressTimer = setTimeout(openAdminLogin, 1500);
-});
-
-els.brandAdminTrigger.addEventListener("touchend", () => {
-  clearTimeout(adminPressTimer);
-});
-
-els.brandAdminTrigger.addEventListener("touchcancel", () => {
+els.brandAdminTrigger.addEventListener("pointercancel", () => {
   clearTimeout(adminPressTimer);
 });
 document.addEventListener("keydown", (event) => {
