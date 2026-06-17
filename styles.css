@@ -1139,3 +1139,10 @@ body.detail-open {
     max-height: none;
   }
 }
+
+#brandAdminTrigger {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
