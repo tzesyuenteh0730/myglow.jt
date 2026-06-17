@@ -1116,9 +1116,8 @@ body.detail-open {
 
 .shop-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) 420px;
+  grid-template-columns: 3fr 1.2fr;
   gap: 24px;
-  align-items: start;
 }
 
 .catalog-panel {
