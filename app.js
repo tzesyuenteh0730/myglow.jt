@@ -1358,8 +1358,8 @@ els.brandAdminTrigger.addEventListener("click", () => {
   window.clearTimeout(adminTriggerTimer);
   adminTriggerTimer = window.setTimeout(() => {
     adminTriggerClicks = 0;
-  }, 1400);
-  if (adminTriggerClicks >= 5) {
+  }, 5000);
+  if (adminTriggerClicks >= 3) {
     adminTriggerClicks = 0;
     switchMode("lock");
     window.setTimeout(() => els.adminPassInput.focus(), 60);
