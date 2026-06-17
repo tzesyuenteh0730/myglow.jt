@@ -1352,18 +1352,40 @@ els.unlockAdminBtn.addEventListener("click", unlockAdmin);
 els.adminPassInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") unlockAdmin();
 });
-els.brandAdminTrigger.addEventListener("click", () => {
+let adminPressTimer;
+
+function openAdminLogin() {
   if (appMode === "admin") return;
-  adminTriggerClicks += 1;
-  window.clearTimeout(adminTriggerTimer);
-  adminTriggerTimer = window.setTimeout(() => {
-    adminTriggerClicks = 0;
-  }, 5000);
-  if (adminTriggerClicks >= 3) {
-    adminTriggerClicks = 0;
-    switchMode("lock");
-    window.setTimeout(() => els.adminPassInput.focus(), 60);
-  }
+
+  switchMode("lock");
+
+  setTimeout(() => {
+    els.adminPassInput?.focus();
+  }, 100);
+}
+
+els.brandAdminTrigger.addEventListener("mousedown", () => {
+  adminPressTimer = setTimeout(openAdminLogin, 1500);
+});
+
+els.brandAdminTrigger.addEventListener("mouseup", () => {
+  clearTimeout(adminPressTimer);
+});
+
+els.brandAdminTrigger.addEventListener("mouseleave", () => {
+  clearTimeout(adminPressTimer);
+});
+
+els.brandAdminTrigger.addEventListener("touchstart", () => {
+  adminPressTimer = setTimeout(openAdminLogin, 1500);
+});
+
+els.brandAdminTrigger.addEventListener("touchend", () => {
+  clearTimeout(adminPressTimer);
+});
+
+els.brandAdminTrigger.addEventListener("touchcancel", () => {
+  clearTimeout(adminPressTimer);
 });
 document.addEventListener("keydown", (event) => {
   if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "a" && appMode !== "admin") {
