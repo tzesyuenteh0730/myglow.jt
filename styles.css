@@ -89,9 +89,7 @@ button {
 }
 
 .app-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
-  gap: 18px;
+  display: block;
   padding: 0 clamp(18px, 4vw, 52px) 40px;
 }
 
