@@ -57,72 +57,136 @@
         <div class="catalog-grid" id="catalogGrid"></div>
       </section>
 
-      <aside class="panel cart-panel customer-area" aria-labelledby="cartTitle">
-        <div class="section-heading compact">
-          <div>
-            <p class="eyebrow">Checkout</p>
-            <h2 id="cartTitle">Shopping cart</h2>
-          </div>
-          <output id="cartCount" class="pill">0 items</output>
-  <div class="customer-info">
-  <div class="account-head">
+      ```html
+<aside class="panel cart-panel customer-area" aria-labelledby="cartTitle">
+
+  <div class="section-heading compact">
     <div>
-      <p class="eyebrow">Customer Information</p>
-      <strong>Please fill in before checkout</strong>
+      <p class="eyebrow">Checkout</p>
+      <h2 id="cartTitle">Shopping cart</h2>
     </div>
+    <output id="cartCount" class="pill">0 items</output>
   </div>
 
-  <label>
-    <span>Name *</span>
-    <input id="customerNameInput" type="text" placeholder="Your Name">
-  </label>
+  <div class="customer-info">
+    <div class="account-head">
+      <div>
+        <p class="eyebrow">Customer Information</p>
+        <strong>Please fill in before checkout</strong>
+      </div>
+    </div>
 
-  <label>
-    <span>Phone Number *</span>
-    <input id="customerPhoneInput" type="tel" placeholder="0123456789">
-  </label>
+    <label>
+      <span>Name *</span>
+      <input id="customerNameInput" type="text" placeholder="Your Name">
+    </label>
 
-  <label>
-    <span>WhatsApp Number *</span>
-    <input id="customerWhatsappInput" type="tel" placeholder="60123456789">
-  </label>
+    <label>
+      <span>Phone Number *</span>
+      <input id="customerPhoneInput" type="tel" placeholder="0123456789">
+    </label>
 
-  <label>
-    <span>Delivery Address *</span>
-    <textarea id="customerAddressInput" rows="4" placeholder="Full delivery address"></textarea>
-  </label>
-</div>
-        <div id="cartItems" class="cart-items"></div>
-        <div class="cart-total">
-          <span>Total</span>
-          <strong id="cartTotal">RM0.00</strong>
-        </div>
-        <button class="primary-button wide" id="checkoutBtn" type="button">Show payment code</button>
-        <div id="paymentPanel" class="payment-panel" hidden>
-          <p class="eyebrow">Payment receive code</p>
-          <output id="customerCloudStatus" class="pill">Checking cloud</output>
-          <img id="checkoutQrImage" class="checkout-qr" alt="Payment QR code" hidden>
-          <div class="receive-code" id="receiveCodeText"></div>
-          <div class="checkout-banks" id="checkoutBankDetails"></div>
-          <div class="payment-lines">
-            <span>Order</span><strong id="orderCodeText"></strong>
-            <span>Amount</span><strong id="orderAmountText"></strong>
-          </div>
-          <div class="payment-proof">
-            <label>
-              <span>Upload bank transfer receipt</span>
-              <input id="receiptFileInput" type="file" accept="image/*,.pdf">
-            </label>
-            <label>
-              <span>Transfer details</span>
-              <textarea id="transferDetailsInput" rows="3" placeholder="Bank used, transfer time, reference number"></textarea>
-            </label>
-            <div class="receipt-preview" id="receiptPreview" hidden></div>
-          </div>
-          <button class="secondary-button wide" id="copyPaymentBtn" type="button">Copy payment details</button>
-          <button class="primary-button wide" id="paidBtn" type="button">Submit order paid</button>
-        </div>
-      </aside>
+    <label>
+      <span>WhatsApp Number *</span>
+      <input id="customerWhatsappInput" type="tel" placeholder="60123456789">
+    </label>
+
+    <label>
+      <span>Delivery Address *</span>
+      <textarea id="customerAddressInput" rows="4" placeholder="Full delivery address"></textarea>
+    </label>
+  </div>
+
+  <div id="cartItems" class="cart-items"></div>
+
+  <div class="cart-total">
+    <span>Total</span>
+    <strong id="cartTotal">RM0.00</strong>
+  </div>
+
+  <button class="primary-button wide" id="checkoutBtn" type="button">
+    Show payment code
+  </button>
+
+  <div id="paymentPanel" class="payment-panel" hidden>
+
+    <p class="eyebrow">Payment receive code</p>
+
+    <output id="customerCloudStatus" class="pill">
+      Checking cloud
+    </output>
+
+    <img
+      id="checkoutQrImage"
+      class="checkout-qr"
+      alt="Payment QR code"
+      hidden
+    >
+
+    <div class="receive-code" id="receiveCodeText"></div>
+
+    <div
+      class="checkout-banks"
+      id="checkoutBankDetails"
+    ></div>
+
+    <div class="payment-lines">
+      <span>Order</span>
+      <strong id="orderCodeText"></strong>
+
+      <span>Amount</span>
+      <strong id="orderAmountText"></strong>
+    </div>
+
+    <div class="payment-proof">
+
+      <label>
+        <span>Upload bank transfer receipt</span>
+        <input
+          id="receiptFileInput"
+          type="file"
+          accept="image/*,.pdf"
+        >
+      </label>
+
+      <label>
+        <span>Transfer details</span>
+        <textarea
+          id="transferDetailsInput"
+          rows="3"
+          placeholder="Bank used, transfer time, reference number"
+        ></textarea>
+      </label>
+
+      <div
+        class="receipt-preview"
+        id="receiptPreview"
+        hidden
+      ></div>
+
+    </div>
+
+    <button
+      class="secondary-button wide"
+      id="copyPaymentBtn"
+      type="button"
+    >
+      Copy payment details
+    </button>
+
+    <button
+      class="primary-button wide"
+      id="paidBtn"
+      type="button"
+    >
+      Submit order paid
+    </button>
+
+  </div>
+
+</aside>
+```
+
 
       <nav class="workspace-nav admin-area" aria-label="Admin sections">
         <button class="active" data-section-target="inventory" type="button">Manage inventory</button>
