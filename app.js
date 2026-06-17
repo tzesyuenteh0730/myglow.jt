@@ -186,7 +186,19 @@ function normalizeState(data) {
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    const lightState = {
+      books: state.books,
+      cart: state.cart,
+      paymentCode: state.paymentCode,
+      qrImage: state.qrImage,
+      bankDetails: state.bankDetails
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lightState));
+  } catch (error) {
+    console.error("Storage full:", error);
+  }
 }
 
 async function authRequest(path, body) {
@@ -289,7 +301,6 @@ async function loadCloudOrders() {
     });
     cloud.ready = true;
     cloud.error = "";
-    saveState();
     renderOrders();
     setCloudStatus("Cloud synced", true);
   } catch (error) {
