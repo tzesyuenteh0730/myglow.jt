@@ -590,9 +590,22 @@ function renderAdminList() {
         <p>${book.variants.length} variations · ${formatPrice(low)}${low === high ? "" : ` to ${formatPrice(high)}`} · ${book.active ? "visible" : "hidden"}</p>
       </div>
       <div class="admin-book-actions">
-        <button class="ghost-button" type="button" data-edit="${book.id}">Edit</button>
-        <button class="ghost-button danger" type="button" data-delete="${book.id}">Delete</button>
-      </div>
+    <button class="ghost-button" data-edit="${book.id}">
+        Edit
+    </button>
+
+    <button class="ghost-button" data-copy="${book.id}">
+        📋 Caption
+    </button>
+
+    <button class="ghost-button" data-export="${book.id}">
+        🖼 Export
+    </button>
+
+    <button class="ghost-button danger" data-delete="${book.id}">
+        Delete
+    </button>
+</div>
     `;
     els.adminList.appendChild(item);
   });
@@ -1294,23 +1307,66 @@ els.cartItems.addEventListener("click", (event) => {
   render();
 });
 
-els.adminList.addEventListener("click", (event) => {
+els.adminList.addEventListener("click", async (event) => {
+
   const editButton = event.target.closest("[data-edit]");
   const deleteButton = event.target.closest("[data-delete]");
+  const copyButton = event.target.closest("[data-copy]");
+  const exportButton = event.target.closest("[data-export]");
+
+  if (copyButton) {
+
+    const book = getBook(copyButton.dataset.copy);
+
+    const caption =
+`🇲🇾 《${book.title}》｜${book.author}
+
+${book.description || ""}
+
+#${book.title.replace(/[《》【】（）()\\s]/g,"")}
+#${book.author.replace(/\\s/g,"")}
+#马来西亚`;
+
+    await navigator.clipboard.writeText(caption);
+
+    alert("Caption copied!");
+    return;
+  }
+
+  if (exportButton) {
+
+    const book = getBook(exportButton.dataset.export);
+
+    await exportBookPhotos(book);
+
+    return;
+  }
+
   if (editButton) {
     activeSection = "inventory";
     renderAdminSections();
     resetForm(getBook(editButton.dataset.edit));
-    window.scrollTo({ top: document.querySelector(".admin-panel").offsetTop - 12, behavior: "smooth" });
+    window.scrollTo({
+      top: document.querySelector(".admin-panel").offsetTop - 12,
+      behavior: "smooth"
+    });
   }
+
   if (deleteButton) {
+
     const bookId = deleteButton.dataset.delete;
-    state.books = state.books.filter((book) => book.id !== bookId);
-    state.cart = state.cart.filter((line) => line.bookId !== bookId);
+
+    state.books = state.books.filter(
+      (book) => book.id !== bookId
+    );
+
+    state.cart = state.cart.filter(
+      (line) => line.bookId !== bookId
+    );
+
     deleteCloudBook(bookId)
       .catch((error) => {
-        console.warn("Cloud delete failed:", error);
-        alert(`Cloud delete failed: ${error.message}`);
+        alert(error.message);
       })
       .finally(() => {
         resetForm();
@@ -1509,6 +1565,95 @@ els.resetDemoBtn.addEventListener("click", () => {
   resetForm();
   boot();
 });
+
+async function exportBookPhotos(book) {
+
+  for (const variant of book.variants) {
+
+    const imageUrl = variant.photo || book.cover;
+
+    if (!imageUrl) continue;
+
+    const img = new Image();
+
+    img.crossOrigin = "anonymous";
+
+    img.src = imageUrl;
+
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    const ctx = canvas.getContext("2d");
+
+    ctx.drawImage(img, 0, 0);
+
+    const text = variant.label;
+
+    ctx.font = "bold 40px Arial";
+
+    const padding = 20;
+
+    const textWidth = ctx.measureText(text).width;
+
+    const boxWidth = textWidth + (padding * 2);
+
+    const boxHeight = 70;
+
+    // white background
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(
+      20,
+      20,
+      boxWidth,
+      boxHeight
+    );
+
+    // border
+    ctx.strokeStyle = "#CCCCCC";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      20,
+      20,
+      boxWidth,
+      boxHeight
+    );
+
+    // black text
+    ctx.fillStyle = "#000000";
+    ctx.textBaseline = "middle";
+
+    ctx.fillText(
+      text,
+      20 + padding,
+      20 + (boxHeight / 2)
+    );
+
+    const link = document.createElement("a");
+
+    link.download =
+      `${book.title}-${variant.label}.jpg`;
+
+    link.href =
+      canvas.toDataURL("image/jpeg", 0.95);
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  alert("Export completed");
+}
 
 async function boot() {
   initSupabase();
