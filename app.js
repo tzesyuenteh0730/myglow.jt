@@ -5,51 +5,6 @@ const CUSTOMER_SESSION_KEY = "myglow-customer-session-v1";
 const CUSTOMER_CART_PREFIX = "myglow-customer-cart-";
 const money = new Intl.NumberFormat("en-MY", { style: "currency", currency: "MYR" });
 
-const demoBooks = [
-  {
-    id: crypto.randomUUID(),
-    title: "The Moonlit Index",
-    author: "Nora Vale",
-    category: "Mystery",
-    description: "A quiet librarian finds a hidden catalog that rewrites one town's past.",
-    cover: "",
-    color: "#176d62",
-    active: true,
-    variants: [
-      { id: crypto.randomUUID(), label: "Paperback", price: 42.9, stock: 18, sku: "MOON-PB" },
-      { id: crypto.randomUUID(), label: "Hardcover", price: 72.0, stock: 7, sku: "MOON-HC" }
-    ]
-  },
-  {
-    id: crypto.randomUUID(),
-    title: "Cooking for Rainy Days",
-    author: "Mei Tan",
-    category: "Lifestyle",
-    description: "Warm recipes, pantry notes, and simple meals for slow afternoons.",
-    cover: "",
-    color: "#bd5760",
-    active: true,
-    variants: [
-      { id: crypto.randomUUID(), label: "Standard", price: 55.5, stock: 12, sku: "RAIN-STD" },
-      { id: crypto.randomUUID(), label: "Signed copy", price: 88.0, stock: 3, sku: "RAIN-SIGN" }
-    ]
-  },
-  {
-    id: crypto.randomUUID(),
-    title: "Small Systems",
-    author: "Daniel Ko",
-    category: "Business",
-    description: "A practical guide to building better habits, teams, and shop workflows.",
-    cover: "",
-    color: "#c4832c",
-    active: true,
-    variants: [
-      { id: crypto.randomUUID(), label: "Paperback", price: 49.9, stock: 20, sku: "SYS-PB" },
-      { id: crypto.randomUUID(), label: "Workbook bundle", price: 96.0, stock: 6, sku: "SYS-WB" }
-    ]
-  }
-];
-
 let state = loadState();
 let currentOrder = null;
 let activeSection = "inventory";
@@ -152,7 +107,7 @@ function loadState() {
   }
 
   return normalizeState({
-    books: demoBooks,
+    books: [],
     cart: [],
     orders: [],
     paymentCode: "DuitNow receive code: MYGLOWJT-8842"
@@ -161,7 +116,7 @@ function loadState() {
 
 function normalizeState(data) {
   const paymentCode = (data.paymentCode || "DuitNow receive code: MYGLOWJT-8842").replace("BOOKNOOK", "MYGLOWJT");
-  const sourceBooks = data.books?.length ? data.books : demoBooks;
+  const sourceBooks = data.books || [];
   return {
     books: sourceBooks.map((book) => ({
       ...book,
@@ -316,9 +271,11 @@ async function loadCloudBooks() {
   try {
     const data = await cloudRequest("books?select=*&order=updated_at.desc");
     if (!data?.length) {
-      await seedCloudBooks();
-      return;
-    }
+  state.books = [];
+  renderCatalog();
+  renderAdminList();
+  return;
+}
     state.books = data.map((row) => row.payload).filter(Boolean);
     renderCatalog();
     renderAdminList();
@@ -329,7 +286,7 @@ async function loadCloudBooks() {
     cloud.ready = false;
     cloud.error = error.message;
     if (!state.books.length) {
-      state.books = demoBooks;
+      state.books = [];
       saveState();
     }
     setCloudStatus("Cloud books error");
@@ -411,7 +368,7 @@ async function saveCloudSettings() {
 async function loadCloudStore() {
   if (!cloud.enabled) {
     if (!state.books.length) {
-      state.books = demoBooks;
+      state.books = [];
       saveState();
     }
     setCloudStatus("Local only");
@@ -1557,14 +1514,6 @@ els.clearQrBtn.addEventListener("click", () => {
 
 els.savePaymentBtn.addEventListener("click", savePaymentSetup);
 els.savePaymentBottomBtn.addEventListener("click", savePaymentSetup);
-
-els.resetDemoBtn.addEventListener("click", () => {
-  localStorage.removeItem(STORAGE_KEY);
-  state = loadState();
-  currentOrder = null;
-  resetForm();
-  boot();
-});
 
 async function exportBookPhotos(book) {
 
