@@ -1146,3 +1146,14 @@ body.detail-open {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
+
+.admin-book-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 220px;
+}
+
+.admin-book-actions button {
+    width: 100%;
+}
