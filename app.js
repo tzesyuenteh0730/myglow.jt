@@ -595,11 +595,11 @@ function renderAdminList() {
     </button>
 
     <button class="ghost-button" data-copy="${book.id}">
-        📋 Caption
+        Caption
     </button>
 
     <button class="ghost-button" data-export="${book.id}">
-        🖼 Export
+        Export
     </button>
 
     <button class="ghost-button danger" data-delete="${book.id}">
