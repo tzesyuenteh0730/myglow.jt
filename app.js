@@ -1359,8 +1359,6 @@ els.bankRows.addEventListener("click", (event) => {
 
 els.saveBookBtn.addEventListener("click", saveBook);
 els.saveBookBottomBtn.addEventListener("click", saveBook);
-
-els.addVariantBtn.addEventListener("click", () => addVariantRow({ label: "", price: "", stock: 0}));
 els.applyBulkBtn.addEventListener("click", () => {
 
     const price = els.bulkPrice.value;
