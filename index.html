@@ -239,7 +239,23 @@
 
           <div class="variant-header">
             <h3>Variations and prices</h3>
-            <button class="ghost-button" id="addVariantBtn" type="button">Add variation</button>
+          <div class="variant-actions">
+
+  <button
+    class="ghost-button"
+    id="addVariantBtn"
+    type="button">
+    Add variation
+  </button>
+
+  <button
+    class="ghost-button"
+    id="bulkAssignBtn"
+    type="button">
+    Bulk assign
+  </button>
+
+</div>
           </div>
           <div id="variantRows" class="variant-rows"></div>
           <button class="primary-button wide" id="saveBookBottomBtn" type="button">Save book</button>
@@ -356,6 +372,51 @@
       </div>
     </template>
 
+    <div
+  id="bulkAssignModal"
+  class="modal-overlay"
+  hidden>
+
+  <div class="modal-card">
+
+    <h3>Bulk Assign</h3>
+
+    <label>
+      <span>Price</span>
+      <input
+        id="bulkPrice"
+        type="number"
+        step="0.01">
+    </label>
+
+    <label>
+      <span>Stock</span>
+      <input
+        id="bulkStock"
+        type="number">
+    </label>
+
+    <div class="modal-actions">
+
+      <button
+        id="applyBulkBtn"
+        class="primary-button"
+        type="button">
+        Apply
+      </button>
+
+      <button
+        id="closeBulkBtn"
+        class="ghost-button"
+        type="button">
+        Cancel
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
     <script src="supabase-config.js"></script>
     <script src="app.js"></script>
   </body>
