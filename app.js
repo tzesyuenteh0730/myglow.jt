@@ -616,7 +616,15 @@ function resetForm(book = null) {
   els.descriptionInput.value = book?.description || "";
   els.activeInput.checked = book?.active ?? true;
   renderCoverPreview();
-  (book?.variants || []).forEach(addVariantRow);
+if (book?.variants?.length) {
+  book.variants.forEach(addVariantRow);
+} else {
+  addVariantRow({
+    label: "",
+    price: "",
+    stock: 0
+  });
+}
 }
 
 function addVariantRow(variant = {}) {
