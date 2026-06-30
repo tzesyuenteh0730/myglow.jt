@@ -74,7 +74,6 @@ const els = {
   adminList: document.querySelector("#adminList"),
   paymentCodeInput: document.querySelector("#paymentCodeInput"),
   qrImageInput: document.querySelector("#qrImageInput"),
-  qrUrlInput: document.querySelector("#qrUrlInput"),
   clearQrBtn: document.querySelector("#clearQrBtn"),
   qrPreview: document.querySelector("#qrPreview"),
   qrEmptyText: document.querySelector("#qrEmptyText"),
@@ -91,7 +90,10 @@ const els = {
   ordersList: document.querySelector("#ordersList"),
   ordersCount: document.querySelector("#ordersCount"),
   cloudStatus: document.querySelector("#cloudStatus"),
-  refreshOrdersBtn: document.querySelector("#refreshOrdersBtn")
+  refreshOrdersBtn: document.querySelector("#refreshOrdersBtn"),
+  bulkPrice: document.querySelector("#bulkPrice"),
+  bulkStock: document.querySelector("#bulkStock"),
+  applyBulkBtn: document.querySelector("#applyBulkBtn"),
 };
 
 function loadState() {
@@ -528,7 +530,7 @@ function renderAdminList() {
       book.author,
       book.category,
       book.description,
-      ...book.variants.flatMap((variant) => [variant.label, variant.sku, String(variant.price), String(variant.stock)])
+      ...book.variants.flatMap((variant) => [variant.label, String(variant.price), String(variant.stock)])
     ].join(" ").toLowerCase();
     return text.includes(query);
   });
@@ -579,7 +581,6 @@ function renderAdminSections() {
 
 function renderPaymentSetup() {
   els.paymentCodeInput.value = state.paymentCode;
-  els.qrUrlInput.value = isRemoteImage(state.qrImage) ? state.qrImage : "";
   renderQrPreview();
   renderBankRows();
 }
@@ -622,7 +623,6 @@ function addVariantRow(variant = {}) {
   row.querySelector(".variant-label").value = variant.label || "";
   row.querySelector(".variant-price").value = variant.price ?? "";
   row.querySelector(".variant-stock").value = variant.stock ?? "";
-  row.querySelector(".variant-sku").value = variant.sku || "";
   updateVariantPhotoPreview(row, variant.photo || "");
   els.variantRows.appendChild(row);
 }
@@ -645,7 +645,6 @@ function collectBookFromForm() {
       label: row.querySelector(".variant-label").value.trim(),
       price: Number(row.querySelector(".variant-price").value),
       stock: Number.parseInt(row.querySelector(".variant-stock").value, 10),
-      sku: row.querySelector(".variant-sku").value.trim()
     }))
     .filter((variant) => variant.label && Number.isFinite(variant.price) && Number.isFinite(variant.stock));
 
@@ -722,7 +721,7 @@ function openBookDetail(bookId) {
               <input type="radio" name="detailVariant" value="${variant.id}" ${variant.id === firstAvailable?.id ? "checked" : ""} ${variant.stock <= 0 ? "disabled" : ""}>
               <span>
                 <strong>${escapeHtml(variant.label)}</strong>
-                <small>${variant.sku ? `${escapeHtml(variant.sku)} · ` : ""}${variant.stock} left</small>
+                <small>${variant.stock} left</small>
               </span>
               <b>${formatPrice(variant.price)}</b>
             </label>
@@ -996,7 +995,7 @@ function collectBankDetails() {
 
 async function savePaymentSetup() {
   state.paymentCode = els.paymentCodeInput.value.trim();
-  state.qrImage = els.qrUrlInput.value.trim() || state.qrImage || "";
+  state.qrImage = state.qrImage || "";
   state.bankDetails = collectBankDetails();
   try {
     await saveCloudSettings();
@@ -1009,10 +1008,6 @@ async function savePaymentSetup() {
     setCloudStatus("Cloud settings error");
     alert(`Payment setup save failed: ${error.message}`);
   }
-}
-
-function isRemoteImage(value) {
-  return /^https?:\/\//i.test(value || "");
 }
 
 async function switchSection(section) {
@@ -1362,7 +1357,25 @@ els.bankRows.addEventListener("click", (event) => {
 els.saveBookBtn.addEventListener("click", saveBook);
 els.saveBookBottomBtn.addEventListener("click", saveBook);
 
-els.addVariantBtn.addEventListener("click", () => addVariantRow({ label: "", price: "", stock: 1, sku: "" }));
+els.addVariantBtn.addEventListener("click", () => addVariantRow({ label: "", price: "", stock: 0}));
+els.applyBulkBtn.addEventListener("click", () => {
+
+    const price = els.bulkPrice.value;
+    const stock = els.bulkStock.value;
+
+    document
+        .querySelectorAll(".variant-row")
+        .forEach(row => {
+
+            if (price !== "") {
+                row.querySelector(".variant-price").value = price;
+            }
+
+            if (stock !== "") {
+                row.querySelector(".variant-stock").value = stock;
+            }
+        });
+});
 els.addBankBtn.addEventListener("click", () => addBankRow());
 els.customerViewBtn.addEventListener("click", () => switchMode("customer"));
 els.logoutAdminBtn.addEventListener("click", () => {
@@ -1460,7 +1473,6 @@ els.qrImageInput.addEventListener("change", () => {
   const file = els.qrImageInput.files?.[0];
   readImageFile(file, (image) => {
     state.qrImage = image;
-    els.qrUrlInput.value = "";
     savePaymentSetup();
   });
 });
@@ -1490,15 +1502,9 @@ els.clearCoverBtn.addEventListener("click", () => {
   renderCoverPreview();
 });
 
-els.qrUrlInput.addEventListener("input", () => {
-  state.qrImage = els.qrUrlInput.value.trim();
-  renderQrPreview();
-});
-
 els.clearQrBtn.addEventListener("click", () => {
   state.qrImage = "";
   els.qrImageInput.value = "";
-  els.qrUrlInput.value = "";
   savePaymentSetup();
 });
 
