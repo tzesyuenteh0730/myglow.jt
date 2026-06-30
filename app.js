@@ -84,7 +84,6 @@ const els = {
   savePaymentBottomBtn: document.querySelector("#savePaymentBottomBtn"),
   saveBookBtn: document.querySelector("#saveBookBtn"),
   saveBookBottomBtn: document.querySelector("#saveBookBottomBtn"),
-  addVariantBtn: document.querySelector("#addVariantBtn"),
   newBookBtn: document.querySelector("#newBookBtn"),
   resetDemoBtn: document.querySelector("#resetDemoBtn"),
   ordersList: document.querySelector("#ordersList"),
@@ -616,14 +615,15 @@ function resetForm(book = null) {
   els.descriptionInput.value = book?.description || "";
   els.activeInput.checked = book?.active ?? true;
   renderCoverPreview();
+
 if (book?.variants?.length) {
-  book.variants.forEach(addVariantRow);
+    book.variants.forEach(addVariantRow);
 } else {
-  addVariantRow({
-    label: "",
-    price: "",
-    stock: 0
-  });
+    addVariantRow({
+        label: "",
+        price: "",
+        stock: ""
+    });
 }
 }
 
