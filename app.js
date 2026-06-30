@@ -710,7 +710,7 @@ function openBookDetail(bookId) {
     <div class="detail-layout" data-detail-book="${book.id}">
       <div class="detail-media">
         <button class="detail-main-image ${heroImage ? "has-image" : ""}" type="button" data-enlarge-photo="${escapeAttr(heroImage)}" style="${heroImage ? `background-image: url('${escapeAttr(heroImage)}')` : `--cover-color: ${escapeAttr(book.color || "#176d62")}`}">
-          <span>${escapeHtml(book.title)}</span>
+          <span>${escapeHtml(firstAvailable?.label || book.title)}</span>
         </button>
         <div class="detail-thumbs">
           ${book.variants.map((variant) => {
@@ -724,7 +724,9 @@ function openBookDetail(bookId) {
         </div>
       </div>
       <div class="detail-copy">
-        <h2 id="bookDetailTitle">${escapeHtml(book.title)}</h2>
+        <h2 id="bookDetailTitle">
+  ${escapeHtml(firstAvailable?.label || book.title)}
+</h2>
         <p class="meta">${escapeHtml(book.author)}</p>
         <p>${escapeHtml(book.description || "No description yet.")}</p>
         <div class="detail-variants">
@@ -762,6 +764,14 @@ function updateDetailVariant(variantId) {
   const book = getBook(layout.dataset.detailBook);
   const variant = getVariant(book, variantId);
   if (!book || !variant) return;
+  const detailTitle = els.bookDetailContent.querySelector("#bookDetailTitle");
+  if (detailTitle) {
+  detailTitle.textContent = variant.label;
+}
+  const imageLabel = main.querySelector("span");
+  if (imageLabel) {
+  imageLabel.textContent = variant.label;
+}
   const image = variant.photo || book.cover || "";
   const main = els.bookDetailContent.querySelector(".detail-main-image");
   main.dataset.enlargePhoto = image;
