@@ -1643,7 +1643,8 @@ async function boot() {
   }
   resetForm();
   renderPaymentSetup();
-  render();
+  els.catalogGrid.innerHTML =
+  '<p class="empty-state">Loading books...</p>';
   await loadCloudStore();
   render();
 }
