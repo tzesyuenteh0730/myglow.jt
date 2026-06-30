@@ -1487,7 +1487,6 @@ els.coverFileInput.addEventListener("change", async () => {
 
     pendingCoverImage = imageUrl;
     els.coverDataInput.value = imageUrl;
-    els.coverInput.value = imageUrl;
 
     renderCoverPreview();
   } catch (err) {
