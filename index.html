@@ -236,12 +236,27 @@
             <input id="activeInput" type="checkbox" checked>
             <span>Visible in shop</span>
           </label>
-          <div class="form-actions">
-    <button type="button" id="bulkAssignBtn" class="secondary">
-        Bulk Assign 
-    </button>
+          <div class="variant-header">
+    <h3>Variations and prices</h3>
+
+    <div class="variant-actions">
+        <button
+            type="button"
+            id="bulkAssignBtn"
+            class="secondary-button">
+            Bulk Assign
+        </button>
+
+        <button
+            type="button"
+            id="addVariantBtn"
+            class="ghost-button">
+            Add variation
+        </button>
+    </div>
 </div>
-          <div id="variantRows" class="variant-rows"></div>
+
+<div id="variantRows" class="variant-rows"></div>
           <button class="primary-button wide" id="saveBookBottomBtn" type="button">Save book</button>
         </form>
 
