@@ -768,13 +768,13 @@ function updateDetailVariant(variantId) {
   if (detailTitle) {
   detailTitle.textContent = variant.label;
 }
+  const image = variant.photo || book.cover || "";
+  const main = els.bookDetailContent.querySelector(".detail-main-image");
+  main.dataset.enlargePhoto = image;
   const imageLabel = main.querySelector("span");
   if (imageLabel) {
   imageLabel.textContent = variant.label;
 }
-  const image = variant.photo || book.cover || "";
-  const main = els.bookDetailContent.querySelector(".detail-main-image");
-  main.dataset.enlargePhoto = image;
   if (image) {
     main.classList.add("has-image");
     main.style.backgroundImage = `url('${image}')`;
