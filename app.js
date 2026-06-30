@@ -449,7 +449,7 @@ function renderCatalog() {
   const query = els.searchInput.value.trim().toLowerCase();
   const books = state.books.filter((book) => {
     if (!book.active) return false;
-    const text = `${book.title} ${book.author} ${book.category}`.toLowerCase();
+    const text = `${book.title} ${book.author} `.toLowerCase();
     return text.includes(query);
   });
 
@@ -608,13 +608,11 @@ function resetForm(book = null) {
   els.coverDataInput.value = book?.cover || "";
   els.titleInput.value = book?.title || "";
   els.authorInput.value = book?.author || "";
-  els.categoryInput.value = book?.category || "";
-  els.coverInput.value = isRemoteImage(book?.cover) ? book.cover : "";
   els.coverFileInput.value = "";
   els.descriptionInput.value = book?.description || "";
   els.activeInput.checked = book?.active ?? true;
   renderCoverPreview();
-  (book?.variants || [{ label: "Paperback", price: 0, stock: 1, sku: "" }]).forEach(addVariantRow);
+  (book?.variants || []).forEach(addVariantRow);
 }
 
 function addVariantRow(variant = {}) {
@@ -662,8 +660,7 @@ function collectBookFromForm() {
     id: els.bookId.value || crypto.randomUUID(),
     title: els.titleInput.value.trim(),
     author: els.authorInput.value.trim(),
-    category: els.categoryInput.value.trim() || "General",
-    cover: els.coverInput.value.trim() || els.coverDataInput.value.trim(),
+    cover: els.coverDataInput.value.trim(),
     description: els.descriptionInput.value.trim(),
     color: colorFromTitle(els.titleInput.value),
     active: els.activeInput.checked,
@@ -716,7 +713,6 @@ function openBookDetail(bookId) {
         </div>
       </div>
       <div class="detail-copy">
-        <p class="eyebrow">${escapeHtml(book.category || "Book")}</p>
         <h2 id="bookDetailTitle">${escapeHtml(book.title)}</h2>
         <p class="meta">${escapeHtml(book.author)}</p>
         <p>${escapeHtml(book.description || "No description yet.")}</p>
@@ -1065,7 +1061,8 @@ function hasValidAdminSession() {
 }
 
 function renderCoverPreview() {
-  const image = els.coverInput.value.trim() || els.coverDataInput.value.trim();
+  const image =
+  els.coverDataInput.value.trim();
   els.coverPreview.hidden = !image;
   els.coverEmptyText.hidden = Boolean(image);
   if (image) {
@@ -1486,16 +1483,9 @@ els.coverFileInput.addEventListener("change", async () => {
   }
 });
 
-els.coverInput.addEventListener("input", () => {
-  pendingCoverImage = els.coverInput.value.trim();
-  els.coverDataInput.value = pendingCoverImage;
-  renderCoverPreview();
-});
-
 els.clearCoverBtn.addEventListener("click", () => {
   pendingCoverImage = "";
   els.coverDataInput.value = "";
-  els.coverInput.value = "";
   els.coverFileInput.value = "";
   renderCoverPreview();
 });
