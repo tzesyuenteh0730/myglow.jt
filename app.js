@@ -94,6 +94,9 @@ const els = {
   bulkPrice: document.querySelector("#bulkPrice"),
   bulkStock: document.querySelector("#bulkStock"),
   applyBulkBtn: document.querySelector("#applyBulkBtn"),
+  bulkAssignBtn: document.querySelector("#bulkAssignBtn"),
+  bulkAssignModal: document.querySelector("#bulkAssignModal"),
+  closeBulkBtn: document.querySelector("#closeBulkBtn"),
 };
 
 function loadState() {
@@ -1375,6 +1378,18 @@ els.applyBulkBtn.addEventListener("click", () => {
                 row.querySelector(".variant-stock").value = stock;
             }
         });
+
+    els.bulkAssignModal.hidden = true;
+
+    els.bulkPrice.value = "";
+    els.bulkStock.value = "";
+});
+els.bulkAssignBtn.addEventListener("click", () => {
+    els.bulkAssignModal.hidden = false;
+});
+
+els.closeBulkBtn.addEventListener("click", () => {
+    els.bulkAssignModal.hidden = true;
 });
 els.addBankBtn.addEventListener("click", () => addBankRow());
 els.customerViewBtn.addEventListener("click", () => switchMode("customer"));
