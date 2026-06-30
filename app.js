@@ -96,6 +96,7 @@ const els = {
   bulkAssignBtn: document.querySelector("#bulkAssignBtn"),
   bulkAssignModal: document.querySelector("#bulkAssignModal"),
   closeBulkBtn: document.querySelector("#closeBulkBtn"),
+  addVariantBtn: document.querySelector("#addVariantBtn"),
 };
 
 function loadState() {
@@ -1357,6 +1358,10 @@ els.variantRows.addEventListener("change", (event) => {
     row.querySelector(".variant-photo-data").value = image;
     updateVariantPhotoPreview(row, image);
   });
+});
+
+els.addVariantBtn.addEventListener("click", () => {
+    addVariantRow();
 });
 
 els.bankRows.addEventListener("click", (event) => {
