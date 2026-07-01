@@ -708,20 +708,37 @@ function openBookDetail(bookId) {
   const heroImage = firstAvailable?.photo || book.cover || "";
   els.bookDetailContent.innerHTML = `
     <div class="detail-layout" data-detail-book="${book.id}">
-      <div class="detail-media">
-        <button class="detail-main-image ${heroImage ? "has-image" : ""}" type="button" data-enlarge-photo="${escapeAttr(heroImage)}" style="${heroImage ? `background-image: url('${escapeAttr(heroImage)}')` : `--cover-color: ${escapeAttr(book.color || "#176d62")}`}">
+     <div class="detail-media">
+  <button
+      class="image-nav prev"
+      type="button"
+      data-image-prev>
+      ‹
+  </button>
+
+  <button
+      class="detail-main-image ${heroImage ? "has-image" : ""}"
+      type="button"
+      data-enlarge-photo="${escapeAttr(heroImage)}"
+      style="${
+        heroImage
+          ? `background-image:url('${escapeAttr(heroImage)}')`
+          : `--cover-color:${escapeAttr(book.color || "#176d62")}`
+      }">
+
+      <span>${escapeHtml(firstAvailable?.label || book.title)}</span>
+
+  </button>
+
+  <button
+      class="image-nav next"
+      type="button"
+      data-image-next>
+      ›
+  </button>
+</div>
           <span>${escapeHtml(firstAvailable?.label || book.title)}</span>
         </button>
-        <div class="detail-thumbs">
-          ${book.variants.map((variant) => {
-            const image = variant.photo || book.cover || "";
-            return `
-              <button class="detail-thumb ${variant.id === firstAvailable?.id ? "active" : ""}" type="button" data-detail-variant="${variant.id}" data-detail-photo="${escapeAttr(image)}">
-                ${image ? `<img src="${escapeAttr(image)}" alt="${escapeAttr(variant.label)}">` : `<span>${escapeHtml(variant.label.slice(0, 2).toUpperCase())}</span>`}
-              </button>
-            `;
-          }).join("")}
-        </div>
       </div>
       <div class="detail-copy">
         <h2 id="bookDetailTitle">
@@ -1209,10 +1226,63 @@ function escapeHtml(value) {
     "'": "&#039;"
   })[char]);
 }
+function navigateVariant(direction) {
+
+  const layout =
+    els.bookDetailContent.querySelector("[data-detail-book]");
+
+  if (!layout) return;
+
+  const book = getBook(layout.dataset.detailBook);
+
+  const current =
+    els.bookDetailContent.querySelector(
+      'input[name="detailVariant"]:checked'
+    );
+
+  if (!current) return;
+
+  const index =
+    book.variants.findIndex(v => v.id === current.value);
+
+  let nextIndex = index + direction;
+
+  if (nextIndex < 0)
+    nextIndex = book.variants.length - 1;
+
+  if (nextIndex >= book.variants.length)
+    nextIndex = 0;
+
+  const nextVariant =
+    book.variants[nextIndex];
+
+  const nextRadio =
+    els.bookDetailContent.querySelector(
+      `input[value="${nextVariant.id}"]`
+    );
+
+  nextRadio.checked = true;
+
+  updateDetailVariant(nextVariant.id);
+}
 
 function escapeAttr(value) {
   return escapeHtml(value).replace(/`/g, "&#096;");
 }
+
+els.bookDetailModal.addEventListener("click", (event) => {
+
+  if (event.target.closest("[data-image-prev]")) {
+    navigateVariant(-1);
+    return;
+  }
+
+  if (event.target.closest("[data-image-next]")) {
+    navigateVariant(1);
+    return;
+  }
+
+});
 
 els.catalogGrid.addEventListener("click", (event) => {
   const addButton = event.target.closest("[data-add]");
