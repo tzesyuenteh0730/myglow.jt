@@ -1685,23 +1685,60 @@ async function exportBookPhotos(book) {
       20 + (boxHeight / 2)
     );
 
-    const link = document.createElement("a");
+const imageData =
+  canvas.toDataURL("image/jpeg", 0.95);
 
-    link.download =
-      `${book.title}-${variant.label}.jpg`;
+const isIOS =
+  /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-    link.href =
-      canvas.toDataURL("image/jpeg", 0.95);
+if (isIOS) {
 
-    document.body.appendChild(link);
+  const win = window.open();
 
-    link.click();
-
-    link.remove();
-
-    await new Promise(r => setTimeout(r, 500));
+  if (win) {
+    win.document.write(`
+      <html>
+      <head>
+        <title>${variant.label}</title>
+        <style>
+          body{
+            margin:0;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            background:#000;
+          }
+          img{
+            max-width:100%;
+            max-height:100vh;
+          }
+        </style>
+      </head>
+      <body>
+        <img src="${imageData}">
+      </body>
+      </html>
+    `);
   }
 
+} else {
+
+  const link = document.createElement("a");
+
+  link.download =
+    `${book.title}-${variant.label}.jpg`;
+
+  link.href = imageData;
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  link.remove();
+}
+
+await new Promise(r => setTimeout(r, 500));
+    
   alert("Export completed");
 }
 
@@ -1722,8 +1759,12 @@ async function boot() {
 boot();
 
 async function uploadToStorage(file, bucket) {
-  const fileName = `${Date.now()}-${file.name}`;
+  const safeName =
+  file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
 
+const fileName =
+  `${Date.now()}-${safeName}`;
+  
   const response = await fetch(
     `${cloud.url}/storage/v1/object/${bucket}/${fileName}`,
     {
@@ -1736,9 +1777,33 @@ async function uploadToStorage(file, bucket) {
     }
   );
 
-  if (!response.ok) {
-    throw new Error("Upload failed");
-  }
+if (!response.ok) {
+
+  const errorText = await response.text();
+
+  console.error(
+    "Storage upload error:",
+    response.status,
+    errorText
+  );
+
+  throw new Error(
+    `Upload failed (${response.status})`
+  );
+}
 
   return `${cloud.url}/storage/v1/object/public/${bucket}/${fileName}`;
 }
+
+const response = await fetch(
+  `${cloud.url}/storage/v1/object/${bucket}/${fileName}`,
+  {
+    method: "POST",
+    headers: {
+      apikey: cloud.anonKey,
+      Authorization: `Bearer ${cloud.anonKey}`,
+      "x-upsert": "true"
+    },
+    body: file
+  }
+);
