@@ -408,24 +408,17 @@ body.detail-open {
 .detail-media,
 .detail-copy,
 .detail-variants {
-  display: grid;
-  gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .detail-main-image {
-  width: 100%;
-  aspect-ratio: 1;
-  border: 0;
-  border-radius: 8px;
-  display: grid;
-  place-items: end start;
-  padding: 18px;
-  color: #fff;
-  text-align: left;
-  background-color: var(--cover-color, #176d62);
-  background-size: cover;
-  background-position: center;
-  cursor: zoom-in;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .detail-main-image span {
@@ -476,15 +469,8 @@ body.detail-open {
 }
 
 .detail-variant-card {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--ink);
+    min-width: auto;
+    padding: 8px 12px;
 }
 
 .detail-variant-card.selected {
@@ -839,11 +825,30 @@ body.detail-open {
   gap: 8px;
 }
 
-.variant-row {
-  display: grid;
-  grid-template-columns: minmax(130px, 1fr) 120px 100px minmax(90px, 0.7fr) minmax(130px, 0.8fr) 96px 42px;
-  gap: 8px;
-  align-items: end;
+@media (max-width: 768px) {
+
+  .variant-row {
+      grid-template-columns:
+          2fr
+          1fr
+          1fr
+          auto;
+
+      gap: 6px;
+  }
+
+  .variant-photo-upload span {
+      display: none;
+  }
+
+  .variant-photo-upload input {
+      width: 80px;
+  }
+
+  .remove-variant {
+      width: 36px;
+      height: 36px;
+  }
 }
 
 .variant-photo-upload {
@@ -1221,4 +1226,27 @@ body.detail-open {
 
 .image-nav.next {
   right: 12px;
+}
+
+@media (max-width: 768px) {
+
+  .detail-layout {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .detail-media {
+      width: 100%;
+  }
+
+  .detail-copy {
+      width: 100%;
+  }
+
+  .book-detail-panel {
+      width: 100vw;
+      height: 100vh;
+      max-width: none;
+      border-radius: 0;
+  }
 }
