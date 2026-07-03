@@ -737,9 +737,6 @@ function openBookDetail(bookId) {
       ›
   </button>
 </div>
-          <span>${escapeHtml(firstAvailable?.label || book.title)}</span>
-        </button>
-      </div>
       <div class="detail-copy">
         <h2 id="bookDetailTitle">
   ${escapeHtml(firstAvailable?.label || book.title)}
@@ -1794,16 +1791,3 @@ if (!response.ok) {
 
   return `${cloud.url}/storage/v1/object/public/${bucket}/${fileName}`;
 }
-
-const response = await fetch(
-  `${cloud.url}/storage/v1/object/${bucket}/${fileName}`,
-  {
-    method: "POST",
-    headers: {
-      apikey: cloud.anonKey,
-      Authorization: `Bearer ${cloud.anonKey}`,
-      "x-upsert": "true"
-    },
-    body: file
-  }
-);
