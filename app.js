@@ -274,7 +274,9 @@ async function loadCloudOrders() {
 async function loadCloudBooks() {
   if (!cloud.enabled) return;
   try {
-    const data = await cloudRequest("books?select=*&order=updated_at.desc");
+    const data = await cloudRequest(
+  "books?select=payload&order=updated_at.desc"
+);
     if (!data?.length) {
   state.books = [];
   renderCatalog();
