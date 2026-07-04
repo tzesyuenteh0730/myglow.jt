@@ -1162,7 +1162,7 @@ function formatDate(value) {
 }
 
 function updateVariantPhotoPreview(row, image) {
-  const preview = row.querySelector(".variant-photo-preview");
+  const preview = row.querySelector(".variant-photo-box");
   const img = preview.querySelector("img");
   const text = preview.querySelector("span");
   img.hidden = !image;
