@@ -817,13 +817,13 @@ body.detail-open {
 .variant-row {
     display: grid;
     grid-template-columns:
-        40px      /* drag */
-        2fr       /* variation name */
-        100px     /* price */
-        100px     /* stock */
-        160px     /* upload */
-        80px      /* preview */
-        50px;     /* delete */
+        40px
+        minmax(220px, 2fr)
+        100px
+        100px
+        160px
+        80px
+        50px;
 
     gap: 12px;
     align-items: center;
@@ -1273,4 +1273,12 @@ body.detail-open {
 
 .bulk-assign-row input {
     max-width: 180px;
+}
+
+.drag-handle {
+    cursor: grab;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    font-size: 18px;
 }
