@@ -1816,17 +1816,36 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-function updateVariantPhotoPreview(row, image) {
-  const preview = row.querySelector(".variant-photo-box");
-  const img = preview.querySelector("img");
-  const text = preview.querySelector("span");
-  img.hidden = !image;
-  text.hidden = Boolean(image);
-  if (image) {
-    img.src = image;
-  } else {
-    img.removeAttribute("src");
-  }
+function updateVariantPhotoPreview(row, photo) {
+
+    const preview =
+        row.querySelector(".variant-photo-box");
+
+    if (!preview) return;
+
+    const image =
+        preview.querySelector("img");
+
+    const text =
+        preview.querySelector("span");
+
+    if (photo) {
+
+        image.src = photo;
+        image.hidden = false;
+
+        if (text) {
+            text.hidden = true;
+        }
+
+    } else {
+
+        image.hidden = true;
+
+        if (text) {
+            text.hidden = false;
+        }
+    }
 }
 
 function updateSelectedVariantPhoto(select) {
