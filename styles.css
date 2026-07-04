@@ -820,55 +820,50 @@ body.detail-open {
   font-size: 1.05rem;
 }
 
-@media (max-width: 768px) {
-
- .variant-row {
-    display: grid;
-    grid-template-columns:
-        2fr      /* variation name */
-        100px    /* price */
-        100px    /* stock */
-        140px    /* upload */
-        80px     /* preview */
-        50px;    /* delete */
-
-    gap: 12px;
-    align-items: center;
-
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+.variant-header {
+    font-weight: 600;
     margin-bottom: 10px;
+    padding: 0 8px;
+    color: var(--muted);
+    font-size: 0.9rem;
 }
 
-  .variant-header {
+.variant-header,
+.variant-row {
     display: grid;
     grid-template-columns:
-        2fr
+        minmax(220px, 2fr)
         100px
         100px
-        140px
+        160px
         80px
         50px;
 
     gap: 12px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    padding: 0 12px;
+    align-items: center;
+    padding: 10px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 10px;
 }
-  
-  .variant-photo-upload span {
-      display: none;
-  }
 
-  .variant-photo-upload input {
-      width: 80px;
-  }
+@media (max-width: 768px) {
 
-  .remove-variant {
-      width: 36px;
-      height: 36px;
-  }
+    .variant-header {
+        display: none;
+    }
+
+    .variant-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .variant-row input,
+    .variant-row button,
+    .variant-photo-box {
+        width: 100%;
+    }
+
 }
 
 .variant-photo-upload {
@@ -879,22 +874,31 @@ body.detail-open {
   padding: 8px;
 }
 
-.variant-photo-preview {
-  min-height: 42px;
-  display: grid;
-  place-items: center;
-  border: 1px dashed var(--line);
-  border-radius: 6px;
-  color: var(--muted);
-  font-size: 0.78rem;
-  background: #fff;
-  overflow: hidden;
+.variant-photo-box {
+    min-height: 60px;
+    height: 60px;
+    min-height: 60px;
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
 }
 
-.variant-photo-preview img {
-  width: 100%;
-  height: 56px;
-  object-fit: cover;
+.variant-photo-box img {
+    width: 100%;
+    height: 60px;
+    object-fit: cover;
+}
+
+.remove-variant {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .payment-setup-grid {
