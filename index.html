@@ -241,20 +241,39 @@
           </div>
 
 <div id="variantRows" class="variant-rows"></div>
-          <div class="variant-actions-bottom">
-    <button
-        type="button"
-        id="bulkAssignBtn"
-        class="secondary-button">
-        Bulk Assign
-    </button>
+      <button
+    type="button"
+    id="addVariantBtn"
+    class="add-variant-button">
+    + Add variation
+</button>
 
-    <button
-        type="button"
-        id="addVariantBtn"
-        class="ghost-button">
-        Add variation
-    </button>
+<div class="bulk-assign-section">
+
+    <h4>Bulk assign (price & stock)</h4>
+
+    <div class="bulk-assign-row">
+
+        <input
+            type="number"
+            id="bulkPrice"
+            placeholder="Price (RM)"
+            step="0.01">
+
+        <input
+            type="number"
+            id="bulkStock"
+            placeholder="Stock">
+
+        <button
+            type="button"
+            id="bulkAssignBtn"
+            class="secondary-button">
+            Apply to all
+        </button>
+
+    </div>
+
 </div>
           <button class="primary-button wide" id="saveBookBottomBtn" type="button">Save book</button>
         </form>
@@ -326,7 +345,14 @@
     </section>
     
     <template id="variantTemplate">
-  <div class="variant-row">
+  <div class="variant-row" draggable="true">
+
+  <button
+    type="button"
+    class="drag-handle"
+    title="Drag to reorder">
+    ☰
+  </button>
 
     <input class="variant-photo-data" type="hidden">
 
