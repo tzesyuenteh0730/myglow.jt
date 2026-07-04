@@ -237,6 +237,7 @@
             <span>Visible in shop</span>
           </label>
          <div class="variant-header">
+    <div></div>
     <div>Variation Name</div>
     <div>Price</div>
     <div>Stock</div>
@@ -245,7 +246,7 @@
     <div></div>
 </div>
 
-<div id="variantRows" class="variant-rows"></div
+<div id="variantRows" class="variant-rows"></div>
 <div class="variant-actions">
       <button
         type="button"
@@ -260,7 +261,6 @@
         class="add-variant-button">
         + Add Variation
     </button>
-
 </div>
           <button class="primary-button wide" id="saveBookBottomBtn" type="button">Save book</button>
         </form>
@@ -331,8 +331,16 @@
       </article>
     </section>
     
-   <template id="variantTemplate">
+  <template id="variantTemplate">
+
     <div class="variant-row">
+
+        <button
+            type="button"
+            class="drag-handle"
+            title="Drag to reorder">
+            ☰
+        </button>
 
         <input
             type="text"
@@ -349,11 +357,10 @@
             class="variant-stock"
             placeholder="Stock">
 
-        <div>
-            <input
-                type="file"
-                class="variant-photo-file"
-                accept="image/*">
+        <input
+            type="file"
+            class="variant-photo-file"
+            accept="image/*">
 
         <div class="variant-photo-box">
             <img hidden>
@@ -365,11 +372,13 @@
             class="remove-variant">
             ✕
         </button>
+
         <input
             type="hidden"
             class="variant-photo-data">
 
     </div>
+
 </template>
     
     <template id="bankTemplate">
