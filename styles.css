@@ -53,11 +53,6 @@ button {
 
 .topbar h1,
 .section-heading h2,
-.variant-header h3 {
-  margin: 0;
-  line-height: 1.05;
-  letter-spacing: 0;
-}
 
 .topbar h1 {
   font-size: clamp(2rem, 5vw, 4.2rem);
@@ -811,16 +806,6 @@ body.detail-open {
 }
 
 .variant-header {
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.variant-header h3 {
-  font-size: 1.05rem;
-}
-
-.variant-header {
     font-weight: 600;
     margin-bottom: 10px;
     padding: 0 8px;
@@ -832,19 +817,16 @@ body.detail-open {
 .variant-row {
     display: grid;
     grid-template-columns:
-        minmax(220px, 2fr)
-        100px
-        100px
-        160px
-        80px
-        50px;
+        40px      /* drag */
+        2fr       /* variation name */
+        100px     /* price */
+        100px     /* stock */
+        160px     /* upload */
+        80px      /* preview */
+        50px;     /* delete */
 
     gap: 12px;
     align-items: center;
-    padding: 10px 8px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    margin-bottom: 10px;
 }
 
 @media (max-width: 768px) {
@@ -875,20 +857,15 @@ body.detail-open {
 }
 
 .variant-photo-box {
-    min-height: 60px;
+    width: 60px;
     height: 60px;
     min-height: 60px;
-    display: grid;
-    place-items: center;
-    border: 1px dashed var(--line);
-    border-radius: 6px;
-    overflow: hidden;
-    background: #fff;
+    justify-self: center;
 }
 
 .variant-photo-box img {
     width: 100%;
-    height: 60px;
+    height: 100%;
     object-fit: cover;
 }
 
