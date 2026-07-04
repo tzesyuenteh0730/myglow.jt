@@ -1507,13 +1507,22 @@ els.sectionButtons.forEach((button) => {
 });
 
 els.variantRows.addEventListener("click", (event) => {
-  const button = event.target.closest(".remove-variant");
-  if (!button) return;
-  if (els.variantRows.children.length === 1) {
-    alert("Keep at least one variation.");
-    return;
-  }
-  button.closest(".variant-row").remove();
+
+    const photo =
+        event.target.closest(".variant-photo-box img");
+
+    if (!photo) return;
+
+    const row =
+        photo.closest(".variant-row");
+
+    const image =
+        row.querySelector(".variant-photo-data").value;
+
+    if (image) {
+        enlargePhoto(image);
+    }
+
 });
 
 els.variantRows.addEventListener("change", (event) => {
