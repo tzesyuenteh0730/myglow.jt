@@ -2982,6 +2982,87 @@ function updateVariantPhotoPreview(row, image) {
   }
 }
 
+function enableVariantSorting() {
+
+    let draggedRow = null;
+
+    // ONLY allow dragging when ☰ is held
+    document.addEventListener("mousedown", (e) => {
+
+        const handle =
+            e.target.closest(".drag-handle");
+
+        if (!handle) return;
+
+        const row =
+            handle.closest(".variant-row");
+
+        if (row) {
+            row.setAttribute("draggable", "true");
+        }
+    });
+
+    document.addEventListener("mouseup", () => {
+
+        document
+            .querySelectorAll(".variant-row")
+            .forEach(row =>
+                row.removeAttribute("draggable")
+            );
+    });
+
+    els.variantRows.addEventListener("dragstart", (e) => {
+
+        const row =
+            e.target.closest(".variant-row");
+
+        if (!row) return;
+
+        draggedRow = row;
+
+        row.classList.add("dragging");
+    });
+
+    els.variantRows.addEventListener("dragend", () => {
+
+        draggedRow?.classList.remove("dragging");
+
+        draggedRow = null;
+    });
+
+    els.variantRows.addEventListener("dragover", (e) => {
+
+        e.preventDefault();
+
+        const target =
+            e.target.closest(".variant-row");
+
+        if (!target || target === draggedRow) {
+            return;
+        }
+
+        const rect =
+            target.getBoundingClientRect();
+
+        const midpoint =
+            rect.top + rect.height / 2;
+
+        if (e.clientY < midpoint) {
+
+            els.variantRows.insertBefore(
+                draggedRow,
+                target
+            );
+
+        } else {
+
+            els.variantRows.insertBefore(
+                draggedRow,
+                target.nextSibling
+            );
+        }
+    });
+}
 function updateSelectedVariantPhoto(select) {
   const bookId = select.dataset.variantFor;
   const option = select.options[select.selectedIndex];
