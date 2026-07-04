@@ -647,8 +647,6 @@ function addVariantRow(variant = {}) {
   els.variantRows.appendChild(row);
 }
 
-const STORAGE_KEY = "book-nook-shop-state-v1";
-const ADMIN_SESSION_KEY = "myglow-admin-session-until";
 const ADMIN_SESSION_MS = 24 * 60 * 60 * 1000;
 const CUSTOMER_SESSION_KEY = "myglow-customer-session-v1";
 const CUSTOMER_CART_PREFIX = "myglow-customer-cart-";
