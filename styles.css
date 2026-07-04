@@ -1250,3 +1250,25 @@ body.detail-open {
       border-radius: 0;
   }
 }
+
+.add-variant-button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px;
+}
+
+.bulk-assign-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.bulk-assign-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.bulk-assign-row input {
+    max-width: 180px;
+}
