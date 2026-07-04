@@ -236,43 +236,30 @@
             <input id="activeInput" type="checkbox" checked>
             <span>Visible in shop</span>
           </label>
-          <div class="variant-header">
-    <h3>Variations and prices</h3>
-          </div>
+         <div class="variant-header">
+    <div>Variation Name</div>
+    <div>Price</div>
+    <div>Stock</div>
+    <div>Photo</div>
+    <div>Preview</div>
+    <div></div>
+</div>
 
-<div id="variantRows" class="variant-rows"></div>
+<div id="variantRows" class="variant-rows"></div
+<div class="variant-actions">
       <button
-    type="button"
-    id="addVariantBtn"
-    class="add-variant-button">
-    + Add variation
-</button>
+        type="button"
+        id="bulkAssignBtn"
+        class="secondary-button">
+        Bulk Assign
+    </button>
 
-<div class="bulk-assign-section">
-
-    <h4>Bulk assign (price & stock)</h4>
-
-    <div class="bulk-assign-row">
-
-        <input
-            type="number"
-            id="bulkPrice"
-            placeholder="Price (RM)"
-            step="0.01">
-
-        <input
-            type="number"
-            id="bulkStock"
-            placeholder="Stock">
-
-        <button
-            type="button"
-            id="bulkAssignBtn"
-            class="secondary-button">
-            Apply to all
-        </button>
-
-    </div>
+    <button
+        type="button"
+        id="addVariantBtn"
+        class="add-variant-button">
+        + Add Variation
+    </button>
 
 </div>
           <button class="primary-button wide" id="saveBookBottomBtn" type="button">Save book</button>
@@ -344,64 +331,47 @@
       </article>
     </section>
     
-    <template id="variantTemplate">
-  <div class="variant-row">
+   <template id="variantTemplate">
+    <div class="variant-row">
 
-  <button
-    type="button"
-    class="drag-handle"
-    title="Drag to reorder">
-    ☰
-  </button>
+        <input
+            type="text"
+            class="variant-label"
+            placeholder="Variation Name">
 
-    <input class="variant-photo-data" type="hidden">
+        <input
+            type="number"
+            class="variant-price"
+            placeholder="Price">
 
-    <input
-      class="variant-label"
-      placeholder="Variation"
-      aria-label="Variation name">
+        <input
+            type="number"
+            class="variant-stock"
+            placeholder="Stock">
 
-    <input
-      class="variant-price"
-      type="number"
-      min="0"
-      step="0.01"
-      placeholder="Price">
+        <div>
+            <input
+                type="file"
+                class="variant-photo-file"
+                accept="image/*">
 
-    <input
-      class="variant-stock"
-      type="number"
-      min="0"
-      step="1"
-      placeholder="Stock">
+        <div class="variant-photo-box">
+            <img hidden>
+            <span>No Photo</span>
+        </div>
 
-    <div class="variant-photo-box">
-      <img alt="Variation preview" hidden>
-      <span>No photo</span>
+        <button
+            type="button"
+            class="remove-variant">
+            ✕
+        </button>
+        <input
+            type="hidden"
+            class="variant-photo-data">
+
     </div>
-
-    <label class="variant-photo-upload">
-      <input
-        class="variant-photo-file"
-        type="file"
-        accept="image/*">
-    </label>
-
-    <button
-      class="ghost-button preview-variant"
-      type="button">
-      Preview
-    </button>
-
-    <button
-      class="icon-button remove-variant"
-      type="button">
-      ×
-    </button>
-
-  </div>
 </template>
-
+    
     <template id="bankTemplate">
       <div class="bank-row">
         <input class="bank-name" placeholder="Maybank" aria-label="Bank name">
