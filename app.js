@@ -148,7 +148,13 @@ function normalizeState(data) {
 function saveState() {
   try {
     const lightState = {
-      books: state.books,
+      books: state.books.map(book => ({
+      ...book,
+      variants: book.variants.map(v => ({
+      ...v,
+      photo: ""
+    }))
+  })),
       cart: state.cart,
       paymentCode: state.paymentCode,
       qrImage: state.qrImage,
