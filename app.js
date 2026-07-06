@@ -1791,32 +1791,57 @@ if (isIOS) {
   const win = window.open();
 
   if (win) {
+
     win.document.write(`
+      <!DOCTYPE html>
       <html>
       <head>
         <title>${variant.label}</title>
+
         <style>
           body{
             margin:0;
+            background:#000;
             display:flex;
+            flex-direction:column;
             justify-content:center;
             align-items:center;
-            background:#000;
+            min-height:100vh;
+            font-family:Arial,sans-serif;
           }
+
           img{
             max-width:100%;
-            max-height:100vh;
+            max-height:85vh;
+            object-fit:contain;
+          }
+
+          .tip{
+            color:#fff;
+            text-align:center;
+            padding:16px;
+            line-height:1.5;
+            font-size:16px;
           }
         </style>
       </head>
+
       <body>
-        <img src="${imageData}">
+
+        <img
+          src="${imageData}"
+          alt="${variant.label}">
+
       </body>
       </html>
     `);
+
+    win.document.close();
   }
 
-} else {
+}
+
+ else {
 
   const link = document.createElement("a");
 
