@@ -1602,7 +1602,7 @@ els.variantRows.addEventListener("change", (event) => {
         row,
         finalImage
     );
-});
+}});
 
 els.addVariantBtn.addEventListener("click", () => {
     addVariantRow();
