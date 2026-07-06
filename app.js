@@ -1799,30 +1799,20 @@ if (isIOS) {
         <title>${variant.label}</title>
 
         <style>
-          body{
-            margin:0;
-            background:#000;
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            align-items:center;
-            min-height:100vh;
-            font-family:Arial,sans-serif;
-          }
+        body{
+    margin:0;
+    background:#000;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+  }
 
-          img{
-            max-width:100%;
-            max-height:85vh;
-            object-fit:contain;
-          }
-
-          .tip{
-            color:#fff;
-            text-align:center;
-            padding:16px;
-            line-height:1.5;
-            font-size:16px;
-          }
+  img{
+    max-width:100%;
+    max-height:100vh;
+    object-fit:contain;
+  }
         </style>
       </head>
 
