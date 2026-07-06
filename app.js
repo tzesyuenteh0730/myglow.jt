@@ -568,10 +568,6 @@ function renderAdminList() {
         Caption
     </button>
 
-    <button class="ghost-button" data-export="${book.id}">
-        Export
-    </button>
-
     <button class="ghost-button danger" data-delete="${book.id}">
         Delete
     </button>
@@ -1067,6 +1063,77 @@ async function switchSection(section) {
   document.querySelector(`[data-admin-section="${section}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+async function addVariationLabel(imageSrc, label) {
+
+    if (!label) return imageSrc;
+
+    const img = new Image();
+
+    img.src = imageSrc;
+
+    await new Promise(resolve => {
+        img.onload = resolve;
+    });
+
+    const canvas =
+        document.createElement("canvas");
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    const ctx =
+        canvas.getContext("2d");
+
+    ctx.drawImage(img, 0, 0);
+
+    ctx.font = "bold 40px Arial";
+
+    const padding = 20;
+
+    const textWidth =
+        ctx.measureText(label).width;
+
+    const boxWidth =
+        textWidth + padding * 2;
+
+    const boxHeight = 70;
+
+    ctx.fillStyle = "#FFFFFF";
+
+    ctx.fillRect(
+        20,
+        20,
+        boxWidth,
+        boxHeight
+    );
+
+    ctx.strokeStyle = "#CCCCCC";
+
+    ctx.lineWidth = 2;
+
+    ctx.strokeRect(
+        20,
+        20,
+        boxWidth,
+        boxHeight
+    );
+
+    ctx.fillStyle = "#000000";
+
+    ctx.textBaseline = "middle";
+
+    ctx.fillText(
+        label,
+        20 + padding,
+        20 + boxHeight / 2
+    );
+
+    return canvas.toDataURL(
+        "image/jpeg",
+        0.95
+    );
+}
+
 function switchMode(mode) {
   appMode = mode;
   if (mode === "admin") {
@@ -1439,7 +1506,6 @@ els.adminList.addEventListener("click", async (event) => {
   const editButton = event.target.closest("[data-edit]");
   const deleteButton = event.target.closest("[data-delete]");
   const copyButton = event.target.closest("[data-copy]");
-  const exportButton = event.target.closest("[data-export]");
 
   if (copyButton) {
 
@@ -1457,15 +1523,6 @@ ${book.description || ""}
     await navigator.clipboard.writeText(caption);
 
     alert("Caption copied!");
-    return;
-  }
-
-  if (exportButton) {
-
-    const book = getBook(exportButton.dataset.export);
-
-    await exportBookPhotos(book);
-
     return;
   }
 
@@ -1529,10 +1586,22 @@ els.variantRows.addEventListener("change", (event) => {
   const input = event.target.closest(".variant-photo-file");
   if (!input) return;
   const row = input.closest(".variant-row");
-  readImageFile(input.files?.[0], (image) => {
-    row.querySelector(".variant-photo-data").value = image;
-    updateVariantPhotoPreview(row, image);
-  });
+  
+  readImageFile(input.files?.[0], async (image) => {
+
+    const label =
+        row.querySelector(".variant-label").value.trim();
+
+    const finalImage =
+        await addVariationLabel(image, label);
+
+    row.querySelector(".variant-photo-data").value =
+        finalImage;
+
+    updateVariantPhotoPreview(
+        row,
+        finalImage
+    );
 });
 
 els.addVariantBtn.addEventListener("click", () => {
@@ -1710,147 +1779,6 @@ els.clearQrBtn.addEventListener("click", () => {
 
 els.savePaymentBtn.addEventListener("click", savePaymentSetup);
 els.savePaymentBottomBtn.addEventListener("click", savePaymentSetup);
-
-async function exportBookPhotos(book) {
-
-  for (const variant of book.variants) {
-
-    const imageUrl = variant.photo || book.cover;
-
-    if (!imageUrl) continue;
-
-    const img = new Image();
-
-    img.crossOrigin = "anonymous";
-
-    img.src = imageUrl;
-
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-    });
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    const ctx = canvas.getContext("2d");
-
-    ctx.drawImage(img, 0, 0);
-
-    const text = variant.label;
-
-    ctx.font = "bold 40px Arial";
-
-    const padding = 20;
-
-    const textWidth = ctx.measureText(text).width;
-
-    const boxWidth = textWidth + (padding * 2);
-
-    const boxHeight = 70;
-
-    // white background
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(
-      20,
-      20,
-      boxWidth,
-      boxHeight
-    );
-
-    // border
-    ctx.strokeStyle = "#CCCCCC";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(
-      20,
-      20,
-      boxWidth,
-      boxHeight
-    );
-
-    // black text
-    ctx.fillStyle = "#000000";
-    ctx.textBaseline = "middle";
-
-    ctx.fillText(
-      text,
-      20 + padding,
-      20 + (boxHeight / 2)
-    );
-
-const imageData =
-  canvas.toDataURL("image/jpeg", 0.95);
-
-const isIOS =
-  /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-if (isIOS) {
-
-  const win = window.open();
-
-  if (win) {
-
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${variant.label}</title>
-
-        <style>
-        body{
-    margin:0;
-    background:#000;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-  }
-
-  img{
-    max-width:100%;
-    max-height:100vh;
-    object-fit:contain;
-  }
-        </style>
-      </head>
-
-      <body>
-
-        <img
-          src="${imageData}"
-          alt="${variant.label}">
-
-      </body>
-      </html>
-    `);
-
-    win.document.close();
-  }
-
-}
-
- else {
-
-  const link = document.createElement("a");
-
-  link.download =
-    `${book.title}-${variant.label}.jpg`;
-
-  link.href = imageData;
-
-  document.body.appendChild(link);
-
-  link.click();
-
-  link.remove();
-}
-
-await new Promise(r => setTimeout(r, 500));
-  }
-  alert("Export completed");
-}
 
 async function boot() {
   initSupabase();
