@@ -1086,47 +1086,56 @@ async function addVariationLabel(imageSrc, label) {
 
     ctx.drawImage(img, 0, 0);
 
-    ctx.font = "bold 40px Arial";
+const fontSize = Math.max(
+    14,
+    Math.round(canvas.width * 0.018)
+);
 
-    const padding = 20;
+ctx.font = `bold ${fontSize}px Arial`;
 
-    const textWidth =
-        ctx.measureText(label).width;
+const paddingX = 10;
+const paddingY = 6;
 
-    const boxWidth =
-        textWidth + padding * 2;
+const textWidth =
+    ctx.measureText(label).width;
 
-    const boxHeight = 70;
+const boxWidth =
+    textWidth + paddingX * 2;
 
-    ctx.fillStyle = "#FFFFFF";
+const boxHeight =
+    fontSize + paddingY * 2;
 
-    ctx.fillRect(
-        20,
-        20,
-        boxWidth,
-        boxHeight
-    );
+const margin = 12;
 
-    ctx.strokeStyle = "#CCCCCC";
+const x = margin;
+const y = margin;
 
-    ctx.lineWidth = 2;
+ctx.fillStyle = "rgba(255,255,255,0.95)";
+ctx.fillRect(
+    x,
+    y,
+    boxWidth,
+    boxHeight
+);
 
-    ctx.strokeRect(
-        20,
-        20,
-        boxWidth,
-        boxHeight
-    );
+ctx.strokeStyle = "#D8D8D8";
+ctx.lineWidth = 1;
+ctx.strokeRect(
+    x,
+    y,
+    boxWidth,
+    boxHeight
+);
 
-    ctx.fillStyle = "#000000";
+ctx.fillStyle = "#000";
+ctx.textBaseline = "middle";
+ctx.textAlign = "left";
 
-    ctx.textBaseline = "middle";
-
-    ctx.fillText(
-        label,
-        20 + padding,
-        20 + boxHeight / 2
-    );
+ctx.fillText(
+    label,
+    x + paddingX,
+    y + boxHeight / 2
+);
 
     return canvas.toDataURL(
         "image/jpeg",
