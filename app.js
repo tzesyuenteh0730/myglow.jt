@@ -1088,7 +1088,7 @@ async function addVariationLabel(imageSrc, label) {
 
 const fontSize = Math.max(
     14,
-    Math.round(canvas.width * 0.018)
+    Math.round(canvas.width * 0.045)
 );
 
 ctx.font = `bold ${fontSize}px Arial`;
