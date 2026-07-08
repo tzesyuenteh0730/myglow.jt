@@ -633,14 +633,33 @@ if (book?.variants?.length) {
 }
 
 function addVariantRow(variant = {}) {
-  const row = els.variantTemplate.content.firstElementChild.cloneNode(true);
-  row.dataset.variantId = variant.id || crypto.randomUUID();
-  row.querySelector(".variant-photo-data").value = variant.photo || "";
-  row.querySelector(".variant-label").value = variant.label || "";
-  row.querySelector(".variant-price").value = variant.price ?? "";
-  row.querySelector(".variant-stock").value = variant.stock ?? "";
-  updateVariantPhotoPreview(row, variant.photo || "");
-  els.variantRows.appendChild(row);
+
+    const row =
+        els.variantTemplate.content.firstElementChild.cloneNode(true);
+
+    row.dataset.variantId =
+        variant.id || crypto.randomUUID();
+
+    row.setAttribute("draggable", "true");
+
+    row.querySelector(".variant-photo-data").value =
+        variant.photo || "";
+
+    row.querySelector(".variant-label").value =
+        variant.label || "";
+
+    row.querySelector(".variant-price").value =
+        variant.price ?? "";
+
+    row.querySelector(".variant-stock").value =
+        variant.stock ?? "";
+
+    updateVariantPhotoPreview(
+        row,
+        variant.photo || ""
+    );
+
+    els.variantRows.appendChild(row);
 }
 
 function addBankRow(bank = {}) {
@@ -1616,6 +1635,21 @@ els.variantRows.addEventListener("change", (event) => {
 
 els.addVariantBtn.addEventListener("click", () => {
     addVariantRow();
+});
+
+els.variantRows.addEventListener("click", (event) => {
+
+    const removeBtn =
+        event.target.closest(".remove-variant");
+
+    if (!removeBtn) return;
+
+    const row =
+        removeBtn.closest(".variant-row");
+
+    if (!row) return;
+
+    row.remove();
 });
 
 els.bankRows.addEventListener("click", (event) => {
