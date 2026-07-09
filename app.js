@@ -1549,25 +1549,73 @@ els.adminList.addEventListener("click", async (event) => {
   const editButton = event.target.closest("[data-edit]");
   const deleteButton = event.target.closest("[data-delete]");
   const copyButton = event.target.closest("[data-copy]");
-
-  if (copyButton) {
+if (copyButton) {
 
     const book = getBook(copyButton.dataset.copy);
 
+    if (!book) return;
+
+    const priceSection = (() => {
+
+        const variants = book.variants || [];
+
+        if (!variants.length) return "";
+
+        const priceGroups = {};
+
+        variants.forEach(v => {
+            const price = Number(v.price);
+
+            if (!priceGroups[price]) {
+                priceGroups[price] = [];
+            }
+
+            priceGroups[price].push(v.label);
+        });
+
+        const prices = Object.keys(priceGroups);
+
+        if (prices.length === 1) {
+            return formatPrice(prices[0]);
+        }
+
+        const sorted = Object.entries(priceGroups)
+            .sort((a, b) => {
+    const countDiff = b[1].length - a[1].length;
+
+    if (countDiff !== 0) return countDiff;
+
+    return Number(a[0]) - Number(b[0]);
+});
+
+        const [mainPrice] = sorted[0];
+
+        const lines = [formatPrice(mainPrice)];
+
+        sorted.slice(1).forEach(([price, labels]) => {
+            lines.push(
+                `${labels.join(", ")} : ${formatPrice(price)}`
+            );
+        });
+
+        return lines.join("\n");
+    })();
+
     const caption =
 `🇲🇾 《${book.title}》｜${book.author}
+${priceSection}
 
 ${book.description || ""}
 
-#${book.title.replace(/[《》【】（）()\\s]/g,"")}
-#${book.author.replace(/\\s/g,"")}
+#${book.title.replace(/[《》【】（）()\\s]/g, "")}
+#${book.author.replace(/\\s/g, "")}
 #马来西亚`;
 
     await navigator.clipboard.writeText(caption);
 
     alert("Caption copied!");
     return;
-  }
+}
 
   if (editButton) {
     activeSection = "inventory";
