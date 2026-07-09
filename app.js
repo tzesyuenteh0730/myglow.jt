@@ -1889,7 +1889,7 @@ if (!response.ok) {
   );
 
   throw new Error(
-    `Upload failed (${response.status})`
+    `Upload failed (${response.status}): ${errorText}`
   );
 }
 
