@@ -1871,7 +1871,8 @@ const fileName =
       headers: {
   apikey: cloud.anonKey,
   Authorization: `Bearer ${cloud.anonKey}`,
-  "Content-Type": file.type || "application/octet-stream"
+  "Content-Type": file.type || "application/octet-stream",
+  "x-upsert": "true"
 },
       body: file
     }
