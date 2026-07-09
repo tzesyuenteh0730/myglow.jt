@@ -1213,11 +1213,10 @@ function readImageFile(file, callback) {
   reader.readAsDataURL(file);
 }
 
-function dataUrlToFile(dataUrl, originalName = "book-photo.jpg") {
+function dataUrlToFile(dataUrl, originalName = "variation-photo.jpg") {
   const [meta, data] = dataUrl.split(",");
   const mime = meta.match(/data:(.*?);base64/)?.[1] || "image/jpeg";
   const ext = mime.split("/")[1]?.split("+")[0] || "jpg";
-  const baseName = originalName.replace(/\.[^.]+$/, "") || "book-photo";
   const binary = atob(data);
   const bytes = new Uint8Array(binary.length);
 
@@ -1225,6 +1224,7 @@ function dataUrlToFile(dataUrl, originalName = "book-photo.jpg") {
     bytes[i] = binary.charCodeAt(i);
   }
 
+  const baseName = originalName.replace(/\.[^.]+$/, "") || "variation-photo";
   return new File([bytes], `${baseName}-labelled.${ext}`, { type: mime });
 }
 
@@ -1643,7 +1643,8 @@ els.variantRows.addEventListener("change", (event) => {
       row.querySelector(".variant-photo-data").value = imageUrl;
       updateVariantPhotoPreview(row, imageUrl);
     } catch (err) {
-      alert(err.message);
+      console.error("Variation photo upload failed:", err);
+      alert(`Variation photo upload failed: ${err.message}`);
     }
   });
 });
@@ -1868,9 +1869,10 @@ const fileName =
     {
       method: "POST",
       headers: {
-        apikey: cloud.anonKey,
-        Authorization: `Bearer ${cloud.anonKey}`
-      },
+  apikey: cloud.anonKey,
+  Authorization: `Bearer ${cloud.anonKey}`,
+  "Content-Type": file.type || "application/octet-stream"
+},
       body: file
     }
   );
