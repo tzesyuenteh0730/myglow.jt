@@ -1213,6 +1213,21 @@ function readImageFile(file, callback) {
   reader.readAsDataURL(file);
 }
 
+function dataUrlToFile(dataUrl, originalName = "book-photo.jpg") {
+  const [meta, data] = dataUrl.split(",");
+  const mime = meta.match(/data:(.*?);base64/)?.[1] || "image/jpeg";
+  const ext = mime.split("/")[1]?.split("+")[0] || "jpg";
+  const baseName = originalName.replace(/\.[^.]+$/, "") || "book-photo";
+  const binary = atob(data);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new File([bytes], `${baseName}-labelled.${ext}`, { type: mime });
+}
+
 function readProofFile(file, callback) {
   if (!file) return;
   const reader = new FileReader();
@@ -1613,24 +1628,24 @@ els.variantRows.addEventListener("click", (event) => {
 els.variantRows.addEventListener("change", (event) => {
   const input = event.target.closest(".variant-photo-file");
   if (!input) return;
+
   const row = input.closest(".variant-row");
-  
-  readImageFile(input.files?.[0], async (image) => {
+  const file = input.files?.[0];
+  if (!file) return;
 
-    const label =
-        row.querySelector(".variant-label").value.trim();
+  readImageFile(file, async (image) => {
+    try {
+      const label = row.querySelector(".variant-label").value.trim();
+      const finalImage = await addVariationLabel(image, label);
+      const labelledFile = dataUrlToFile(finalImage, file.name);
+      const imageUrl = await uploadToStorage(labelledFile, "books");
 
-    const finalImage =
-        await addVariationLabel(image, label);
-
-    row.querySelector(".variant-photo-data").value =
-        finalImage;
-
-    updateVariantPhotoPreview(
-        row,
-        finalImage
-    );
-});
+      row.querySelector(".variant-photo-data").value = imageUrl;
+      updateVariantPhotoPreview(row, imageUrl);
+    } catch (err) {
+      alert(err.message);
+    }
+  });
 });
 
 els.addVariantBtn.addEventListener("click", () => {
