@@ -5,51 +5,6 @@ const CUSTOMER_SESSION_KEY = "myglow-customer-session-v1";
 const CUSTOMER_CART_PREFIX = "myglow-customer-cart-";
 const money = new Intl.NumberFormat("en-MY", { style: "currency", currency: "MYR" });
 
-const demoBooks = [
-  {
-    id: crypto.randomUUID(),
-    title: "The Moonlit Index",
-    author: "Nora Vale",
-    category: "Mystery",
-    description: "A quiet librarian finds a hidden catalog that rewrites one town's past.",
-    cover: "",
-    color: "#176d62",
-    active: true,
-    variants: [
-      { id: crypto.randomUUID(), label: "Paperback", price: 42.9, stock: 18, sku: "MOON-PB" },
-      { id: crypto.randomUUID(), label: "Hardcover", price: 72.0, stock: 7, sku: "MOON-HC" }
-    ]
-  },
-  {
-    id: crypto.randomUUID(),
-    title: "Cooking for Rainy Days",
-    author: "Mei Tan",
-    category: "Lifestyle",
-    description: "Warm recipes, pantry notes, and simple meals for slow afternoons.",
-    cover: "",
-    color: "#bd5760",
-    active: true,
-    variants: [
-      { id: crypto.randomUUID(), label: "Standard", price: 55.5, stock: 12, sku: "RAIN-STD" },
-      { id: crypto.randomUUID(), label: "Signed copy", price: 88.0, stock: 3, sku: "RAIN-SIGN" }
-    ]
-  },
-  {
-    id: crypto.randomUUID(),
-    title: "Small Systems",
-    author: "Daniel Ko",
-    category: "Business",
-    description: "A practical guide to building better habits, teams, and shop workflows.",
-    cover: "",
-    color: "#c4832c",
-    active: true,
-    variants: [
-      { id: crypto.randomUUID(), label: "Paperback", price: 49.9, stock: 20, sku: "SYS-PB" },
-      { id: crypto.randomUUID(), label: "Workbook bundle", price: 96.0, stock: 6, sku: "SYS-WB" }
-    ]
-  }
-];
-
 let state = loadState();
 let currentOrder = null;
 let activeSection = "inventory";
@@ -119,7 +74,6 @@ const els = {
   adminList: document.querySelector("#adminList"),
   paymentCodeInput: document.querySelector("#paymentCodeInput"),
   qrImageInput: document.querySelector("#qrImageInput"),
-  qrUrlInput: document.querySelector("#qrUrlInput"),
   clearQrBtn: document.querySelector("#clearQrBtn"),
   qrPreview: document.querySelector("#qrPreview"),
   qrEmptyText: document.querySelector("#qrEmptyText"),
@@ -130,13 +84,19 @@ const els = {
   savePaymentBottomBtn: document.querySelector("#savePaymentBottomBtn"),
   saveBookBtn: document.querySelector("#saveBookBtn"),
   saveBookBottomBtn: document.querySelector("#saveBookBottomBtn"),
-  addVariantBtn: document.querySelector("#addVariantBtn"),
   newBookBtn: document.querySelector("#newBookBtn"),
   resetDemoBtn: document.querySelector("#resetDemoBtn"),
   ordersList: document.querySelector("#ordersList"),
   ordersCount: document.querySelector("#ordersCount"),
   cloudStatus: document.querySelector("#cloudStatus"),
-  refreshOrdersBtn: document.querySelector("#refreshOrdersBtn")
+  refreshOrdersBtn: document.querySelector("#refreshOrdersBtn"),
+  bulkPrice: document.querySelector("#bulkPrice"),
+  bulkStock: document.querySelector("#bulkStock"),
+  applyBulkBtn: document.querySelector("#applyBulkBtn"),
+  bulkAssignBtn: document.querySelector("#bulkAssignBtn"),
+  bulkAssignModal: document.querySelector("#bulkAssignModal"),
+  closeBulkBtn: document.querySelector("#closeBulkBtn"),
+  addVariantBtn: document.querySelector("#addVariantBtn"),
 };
 
 function loadState() {
@@ -152,7 +112,7 @@ function loadState() {
   }
 
   return normalizeState({
-    books: demoBooks,
+    books: [],
     cart: [],
     orders: [],
     paymentCode: "DuitNow receive code: MYGLOWJT-8842"
@@ -161,7 +121,7 @@ function loadState() {
 
 function normalizeState(data) {
   const paymentCode = (data.paymentCode || "DuitNow receive code: MYGLOWJT-8842").replace("BOOKNOOK", "MYGLOWJT");
-  const sourceBooks = data.books?.length ? data.books : demoBooks;
+  const sourceBooks = data.books || [];
   return {
     books: sourceBooks.map((book) => ({
       ...book,
@@ -188,7 +148,13 @@ function normalizeState(data) {
 function saveState() {
   try {
     const lightState = {
-      books: state.books,
+      books: state.books.map(book => ({
+      ...book,
+      variants: book.variants.map(v => ({
+      ...v,
+      photo: ""
+    }))
+  })),
       cart: state.cart,
       paymentCode: state.paymentCode,
       qrImage: state.qrImage,
@@ -314,11 +280,15 @@ async function loadCloudOrders() {
 async function loadCloudBooks() {
   if (!cloud.enabled) return;
   try {
-    const data = await cloudRequest("books?select=*&order=updated_at.desc");
+    const data = await cloudRequest(
+  "books?select=payload&order=updated_at.desc"
+);
     if (!data?.length) {
-      await seedCloudBooks();
-      return;
-    }
+  state.books = [];
+  renderCatalog();
+  renderAdminList();
+  return;
+}
     state.books = data.map((row) => row.payload).filter(Boolean);
     renderCatalog();
     renderAdminList();
@@ -329,7 +299,7 @@ async function loadCloudBooks() {
     cloud.ready = false;
     cloud.error = error.message;
     if (!state.books.length) {
-      state.books = demoBooks;
+      state.books = [];
       saveState();
     }
     setCloudStatus("Cloud books error");
@@ -411,7 +381,7 @@ async function saveCloudSettings() {
 async function loadCloudStore() {
   if (!cloud.enabled) {
     if (!state.books.length) {
-      state.books = demoBooks;
+      state.books = [];
       saveState();
     }
     setCloudStatus("Local only");
@@ -492,7 +462,7 @@ function renderCatalog() {
   const query = els.searchInput.value.trim().toLowerCase();
   const books = state.books.filter((book) => {
     if (!book.active) return false;
-    const text = `${book.title} ${book.author} ${book.category}`.toLowerCase();
+    const text = `${book.title} ${book.author} `.toLowerCase();
     return text.includes(query);
   });
 
@@ -571,7 +541,7 @@ function renderAdminList() {
       book.author,
       book.category,
       book.description,
-      ...book.variants.flatMap((variant) => [variant.label, variant.sku, String(variant.price), String(variant.stock)])
+      ...book.variants.flatMap((variant) => [variant.label, String(variant.price), String(variant.stock)])
     ].join(" ").toLowerCase();
     return text.includes(query);
   });
@@ -590,9 +560,18 @@ function renderAdminList() {
         <p>${book.variants.length} variations · ${formatPrice(low)}${low === high ? "" : ` to ${formatPrice(high)}`} · ${book.active ? "visible" : "hidden"}</p>
       </div>
       <div class="admin-book-actions">
-        <button class="ghost-button" type="button" data-edit="${book.id}">Edit</button>
-        <button class="ghost-button danger" type="button" data-delete="${book.id}">Delete</button>
-      </div>
+    <button class="ghost-button" data-edit="${book.id}">
+        Edit
+    </button>
+
+    <button class="ghost-button" data-copy="${book.id}">
+        Caption
+    </button>
+
+    <button class="ghost-button danger" data-delete="${book.id}">
+        Delete
+    </button>
+</div>
     `;
     els.adminList.appendChild(item);
   });
@@ -609,7 +588,6 @@ function renderAdminSections() {
 
 function renderPaymentSetup() {
   els.paymentCodeInput.value = state.paymentCode;
-  if (els.qrUrlInput) els.qrUrlInput.value = isRemoteImage(state.qrImage) ? state.qrImage : "";
   renderQrPreview();
   renderBankRows();
 }
@@ -638,25 +616,50 @@ function resetForm(book = null) {
   els.coverDataInput.value = book?.cover || "";
   els.titleInput.value = book?.title || "";
   els.authorInput.value = book?.author || "";
-  els.categoryInput.value = book?.category || "";
-  if (els.coverInput) els.coverInput.value = isRemoteImage(book?.cover) ? book.cover : "";
   els.coverFileInput.value = "";
   els.descriptionInput.value = book?.description || "";
   els.activeInput.checked = book?.active ?? true;
   renderCoverPreview();
-  (book?.variants || [{ label: "Paperback", price: 0, stock: 1, sku: "" }]).forEach(addVariantRow);
+
+if (book?.variants?.length) {
+    book.variants.forEach(addVariantRow);
+} else {
+    addVariantRow({
+        label: "",
+        price: "",
+        stock: ""
+    });
+}
 }
 
 function addVariantRow(variant = {}) {
-  const row = els.variantTemplate.content.firstElementChild.cloneNode(true);
-  row.dataset.variantId = variant.id || crypto.randomUUID();
-  row.querySelector(".variant-photo-data").value = variant.photo || "";
-  row.querySelector(".variant-label").value = variant.label || "";
-  row.querySelector(".variant-price").value = variant.price ?? "";
-  row.querySelector(".variant-stock").value = variant.stock ?? "";
-  row.querySelector(".variant-sku").value = variant.sku || "";
-  updateVariantPhotoPreview(row, variant.photo || "");
-  els.variantRows.appendChild(row);
+
+    const row =
+        els.variantTemplate.content.firstElementChild.cloneNode(true);
+
+    row.dataset.variantId =
+        variant.id || crypto.randomUUID();
+
+    row.setAttribute("draggable", "true");
+
+    row.querySelector(".variant-photo-data").value =
+        variant.photo || "";
+
+    row.querySelector(".variant-label").value =
+        variant.label || "";
+
+    row.querySelector(".variant-price").value =
+        variant.price ?? "";
+
+    row.querySelector(".variant-stock").value =
+        variant.stock ?? "";
+
+    updateVariantPhotoPreview(
+        row,
+        variant.photo || ""
+    );
+
+    els.variantRows.appendChild(row);
 }
 
 function addBankRow(bank = {}) {
@@ -677,7 +680,6 @@ function collectBookFromForm() {
       label: row.querySelector(".variant-label").value.trim(),
       price: Number(row.querySelector(".variant-price").value),
       stock: Number.parseInt(row.querySelector(".variant-stock").value, 10),
-      sku: row.querySelector(".variant-sku").value.trim()
     }))
     .filter((variant) => variant.label && Number.isFinite(variant.price) && Number.isFinite(variant.stock));
 
@@ -692,8 +694,7 @@ function collectBookFromForm() {
     id: els.bookId.value || crypto.randomUUID(),
     title: els.titleInput.value.trim(),
     author: els.authorInput.value.trim(),
-    category: els.categoryInput.value.trim() || "General",
-    cover: (els.coverInput?.value || "").trim() || els.coverDataInput.value.trim(),
+    cover: els.coverDataInput.value.trim(),
     description: els.descriptionInput.value.trim(),
     color: colorFromTitle(els.titleInput.value),
     active: els.activeInput.checked,
@@ -730,24 +731,39 @@ function openBookDetail(bookId) {
   const heroImage = firstAvailable?.photo || book.cover || "";
   els.bookDetailContent.innerHTML = `
     <div class="detail-layout" data-detail-book="${book.id}">
-      <div class="detail-media">
-        <button class="detail-main-image ${heroImage ? "has-image" : ""}" type="button" data-enlarge-photo="${escapeAttr(heroImage)}" style="${heroImage ? `background-image: url('${escapeAttr(heroImage)}')` : `--cover-color: ${escapeAttr(book.color || "#176d62")}`}">
-          <span>${escapeHtml(book.title)}</span>
-        </button>
-        <div class="detail-thumbs">
-          ${book.variants.map((variant) => {
-            const image = variant.photo || book.cover || "";
-            return `
-              <button class="detail-thumb ${variant.id === firstAvailable?.id ? "active" : ""}" type="button" data-detail-variant="${variant.id}" data-detail-photo="${escapeAttr(image)}">
-                ${image ? `<img src="${escapeAttr(image)}" alt="${escapeAttr(variant.label)}">` : `<span>${escapeHtml(variant.label.slice(0, 2).toUpperCase())}</span>`}
-              </button>
-            `;
-          }).join("")}
-        </div>
-      </div>
+     <div class="detail-media">
+  <button
+      class="image-nav prev"
+      type="button"
+      data-image-prev>
+      ‹
+  </button>
+
+  <button
+      class="detail-main-image ${heroImage ? "has-image" : ""}"
+      type="button"
+      data-enlarge-photo="${escapeAttr(heroImage)}"
+      style="${
+        heroImage
+          ? `background-image:url('${escapeAttr(heroImage)}')`
+          : `--cover-color:${escapeAttr(book.color || "#176d62")}`
+      }">
+
+      <span>${escapeHtml(firstAvailable?.label || book.title)}</span>
+
+  </button>
+
+  <button
+      class="image-nav next"
+      type="button"
+      data-image-next>
+      ›
+  </button>
+</div>
       <div class="detail-copy">
-        <p class="eyebrow">${escapeHtml(book.category || "Book")}</p>
-        <h2 id="bookDetailTitle">${escapeHtml(book.title)}</h2>
+        <h2 id="bookDetailTitle">
+  ${escapeHtml(firstAvailable?.label || book.title)}
+</h2>
         <p class="meta">${escapeHtml(book.author)}</p>
         <p>${escapeHtml(book.description || "No description yet.")}</p>
         <div class="detail-variants">
@@ -756,7 +772,7 @@ function openBookDetail(bookId) {
               <input type="radio" name="detailVariant" value="${variant.id}" ${variant.id === firstAvailable?.id ? "checked" : ""} ${variant.stock <= 0 ? "disabled" : ""}>
               <span>
                 <strong>${escapeHtml(variant.label)}</strong>
-                <small>${variant.sku ? `${escapeHtml(variant.sku)} · ` : ""}${variant.stock} left</small>
+                <small>${variant.stock} left</small>
               </span>
               <b>${formatPrice(variant.price)}</b>
             </label>
@@ -785,9 +801,17 @@ function updateDetailVariant(variantId) {
   const book = getBook(layout.dataset.detailBook);
   const variant = getVariant(book, variantId);
   if (!book || !variant) return;
+  const detailTitle = els.bookDetailContent.querySelector("#bookDetailTitle");
+  if (detailTitle) {
+  detailTitle.textContent = variant.label;
+}
   const image = variant.photo || book.cover || "";
   const main = els.bookDetailContent.querySelector(".detail-main-image");
   main.dataset.enlargePhoto = image;
+  const imageLabel = main.querySelector("span");
+  if (imageLabel) {
+  imageLabel.textContent = variant.label;
+}
   if (image) {
     main.classList.add("has-image");
     main.style.backgroundImage = `url('${image}')`;
@@ -1030,7 +1054,7 @@ function collectBankDetails() {
 
 async function savePaymentSetup() {
   state.paymentCode = els.paymentCodeInput.value.trim();
-  state.qrImage = (els.qrUrlInput?.value || "").trim() || state.qrImage || "";
+  state.qrImage = state.qrImage || "";
   state.bankDetails = collectBankDetails();
   try {
     await saveCloudSettings();
@@ -1045,10 +1069,6 @@ async function savePaymentSetup() {
   }
 }
 
-function isRemoteImage(value) {
-  return /^https?:\/\//i.test(value || "");
-}
-
 async function switchSection(section) {
   if (section === "payment" && activeSection !== "payment") {
     renderPaymentSetup();
@@ -1060,6 +1080,86 @@ async function switchSection(section) {
     renderOrders();
   }
   document.querySelector(`[data-admin-section="${section}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function addVariationLabel(imageSrc, label) {
+
+    if (!label) return imageSrc;
+
+    const img = new Image();
+
+    img.src = imageSrc;
+
+    await new Promise(resolve => {
+        img.onload = resolve;
+    });
+
+    const canvas =
+        document.createElement("canvas");
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    const ctx =
+        canvas.getContext("2d");
+
+    ctx.drawImage(img, 0, 0);
+
+const fontSize = Math.max(
+    14,
+    Math.round(canvas.width * 0.060)
+);
+
+ctx.font = `bold ${fontSize}px Arial`;
+
+const paddingX = 10;
+const paddingY = 6;
+
+const textWidth =
+    ctx.measureText(label).width;
+
+const boxWidth =
+    textWidth + paddingX * 2;
+
+const boxHeight =
+    fontSize + paddingY * 2;
+
+const margin = 12;
+
+const x = margin;
+const y = margin;
+
+ctx.fillStyle = "rgba(255,255,255,0.95)";
+ctx.fillRect(
+    x,
+    y,
+    boxWidth,
+    boxHeight
+);
+
+ctx.strokeStyle = "#D8D8D8";
+ctx.lineWidth = 1;
+ctx.strokeRect(
+    x,
+    y,
+    boxWidth,
+    boxHeight
+);
+
+ctx.fillStyle = "#000";
+ctx.textBaseline = "middle";
+ctx.textAlign = "left";
+
+ctx.fillText(
+    label,
+    x + paddingX,
+    y + boxHeight / 2
+);
+
+    return canvas.toDataURL(
+        "image/jpeg",
+        0.95
+    );
 }
 
 function switchMode(mode) {
@@ -1095,7 +1195,8 @@ function hasValidAdminSession() {
 }
 
 function renderCoverPreview() {
-  const image = (els.coverInput?.value || "").trim() || els.coverDataInput.value.trim();
+  const image =
+  els.coverDataInput.value.trim();
   els.coverPreview.hidden = !image;
   els.coverEmptyText.hidden = Boolean(image);
   if (image) {
@@ -1107,93 +1208,24 @@ function renderCoverPreview() {
 
 function readImageFile(file, callback) {
   if (!file) return;
-  prepareImageFile(file)
-    .then(({ dataUrl }) => callback(dataUrl))
-    .catch((error) => {
-      console.warn("Image preparation failed, using original file:", error);
-      const reader = new FileReader();
-      reader.addEventListener("load", () => callback(reader.result));
-      reader.readAsDataURL(file);
-    });
+  const reader = new FileReader();
+  reader.addEventListener("load", () => callback(reader.result));
+  reader.readAsDataURL(file);
 }
 
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", () => resolve(reader.result));
-    reader.addEventListener("error", () => reject(reader.error || new Error("Image read failed")));
-    reader.readAsDataURL(file);
-  });
-}
-
-function loadImageElement(src) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.addEventListener("load", () => resolve(image));
-    image.addEventListener("error", () => reject(new Error("Image cannot be displayed by this browser.")));
-    image.src = src;
-  });
-}
-
-function dataUrlToFile(dataUrl, fileName = "myglow-photo.jpg") {
+function dataUrlToFile(dataUrl, originalName = "variation-photo.jpg") {
   const [meta, data] = dataUrl.split(",");
   const mime = meta.match(/data:(.*?);base64/)?.[1] || "image/jpeg";
+  const ext = mime.split("/")[1]?.split("+")[0] || "jpg";
   const binary = atob(data);
   const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
+
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
   }
-  return new File([bytes], fileName, { type: mime });
-}
 
-async function prepareImageFile(file) {
-  const original = await readFileAsDataUrl(file);
-  const image = await loadImageElement(original);
-  const maxSize = 1400;
-  const scale = Math.min(1, maxSize / Math.max(image.naturalWidth, image.naturalHeight));
-  const width = Math.max(1, Math.round(image.naturalWidth * scale));
-  const height = Math.max(1, Math.round(image.naturalHeight * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext("2d");
-  context.drawImage(image, 0, 0, width, height);
-  const dataUrl = canvas.toDataURL("image/jpeg", 0.84);
-  const baseName = file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9._-]/g, "_") || "myglow-photo";
-  return {
-    dataUrl,
-    file: dataUrlToFile(dataUrl, `${baseName}.jpg`)
-  };
-}
-
-function verifyImageUrl(url) {
-  if (!url || url.startsWith("data:")) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    const timer = window.setTimeout(() => reject(new Error("Uploaded image URL could not be loaded.")), 8000);
-    image.addEventListener("load", () => {
-      window.clearTimeout(timer);
-      resolve();
-    });
-    image.addEventListener("error", () => {
-      window.clearTimeout(timer);
-      reject(new Error("Uploaded image URL is not public or cannot be displayed."));
-    });
-    image.src = url;
-  });
-}
-
-async function uploadDisplayImage(file, bucket) {
-  const prepared = await prepareImageFile(file);
-  if (!cloud.enabled) return prepared.dataUrl;
-  try {
-    const imageUrl = await uploadToStorage(prepared.file, bucket);
-    await verifyImageUrl(imageUrl);
-    return imageUrl;
-  } catch (error) {
-    console.warn("Storage image upload failed, saving compressed image data instead:", error);
-    return prepared.dataUrl;
-  }
+  const baseName = originalName.replace(/\.[^.]+$/, "") || "variation-photo";
+  return new File([bytes], `${baseName}-labelled.${ext}`, { type: mime });
 }
 
 function readProofFile(file, callback) {
@@ -1246,7 +1278,7 @@ function formatDate(value) {
 }
 
 function updateVariantPhotoPreview(row, image) {
-  const preview = row.querySelector(".variant-photo-preview");
+  const preview = row.querySelector(".variant-photo-box");
   const img = preview.querySelector("img");
   const text = preview.querySelector("span");
   img.hidden = !image;
@@ -1258,6 +1290,87 @@ function updateVariantPhotoPreview(row, image) {
   }
 }
 
+function enableVariantSorting() {
+
+    let draggedRow = null;
+
+    // ONLY allow dragging when ☰ is held
+    document.addEventListener("mousedown", (e) => {
+
+        const handle =
+            e.target.closest(".drag-handle");
+
+        if (!handle) return;
+
+        const row =
+            handle.closest(".variant-row");
+
+        if (row) {
+            row.setAttribute("draggable", "true");
+        }
+    });
+
+    document.addEventListener("mouseup", () => {
+
+        document
+            .querySelectorAll(".variant-row")
+            .forEach(row =>
+                row.removeAttribute("draggable")
+            );
+    });
+
+    els.variantRows.addEventListener("dragstart", (e) => {
+
+        const row =
+            e.target.closest(".variant-row");
+
+        if (!row) return;
+
+        draggedRow = row;
+
+        row.classList.add("dragging");
+    });
+
+    els.variantRows.addEventListener("dragend", () => {
+
+        draggedRow?.classList.remove("dragging");
+
+        draggedRow = null;
+    });
+
+    els.variantRows.addEventListener("dragover", (e) => {
+
+        e.preventDefault();
+
+        const target =
+            e.target.closest(".variant-row");
+
+        if (!target || target === draggedRow) {
+            return;
+        }
+
+        const rect =
+            target.getBoundingClientRect();
+
+        const midpoint =
+            rect.top + rect.height / 2;
+
+        if (e.clientY < midpoint) {
+
+            els.variantRows.insertBefore(
+                draggedRow,
+                target
+            );
+
+        } else {
+
+            els.variantRows.insertBefore(
+                draggedRow,
+                target.nextSibling
+            );
+        }
+    });
+}
 function updateSelectedVariantPhoto(select) {
   const bookId = select.dataset.variantFor;
   const option = select.options[select.selectedIndex];
@@ -1309,10 +1422,63 @@ function escapeHtml(value) {
     "'": "&#039;"
   })[char]);
 }
+function navigateVariant(direction) {
+
+  const layout =
+    els.bookDetailContent.querySelector("[data-detail-book]");
+
+  if (!layout) return;
+
+  const book = getBook(layout.dataset.detailBook);
+
+  const current =
+    els.bookDetailContent.querySelector(
+      'input[name="detailVariant"]:checked'
+    );
+
+  if (!current) return;
+
+  const index =
+    book.variants.findIndex(v => v.id === current.value);
+
+  let nextIndex = index + direction;
+
+  if (nextIndex < 0)
+    nextIndex = book.variants.length - 1;
+
+  if (nextIndex >= book.variants.length)
+    nextIndex = 0;
+
+  const nextVariant =
+    book.variants[nextIndex];
+
+  const nextRadio =
+    els.bookDetailContent.querySelector(
+      `input[value="${nextVariant.id}"]`
+    );
+
+  nextRadio.checked = true;
+
+  updateDetailVariant(nextVariant.id);
+}
 
 function escapeAttr(value) {
   return escapeHtml(value).replace(/`/g, "&#096;");
 }
+
+els.bookDetailModal.addEventListener("click", (event) => {
+
+  if (event.target.closest("[data-image-prev]")) {
+    navigateVariant(-1);
+    return;
+  }
+
+  if (event.target.closest("[data-image-next]")) {
+    navigateVariant(1);
+    return;
+  }
+
+});
 
 els.catalogGrid.addEventListener("click", (event) => {
   const addButton = event.target.closest("[data-add]");
@@ -1378,23 +1544,104 @@ els.cartItems.addEventListener("click", (event) => {
   render();
 });
 
-els.adminList.addEventListener("click", (event) => {
+els.adminList.addEventListener("click", async (event) => {
+
   const editButton = event.target.closest("[data-edit]");
   const deleteButton = event.target.closest("[data-delete]");
+  const copyButton = event.target.closest("[data-copy]");
+if (copyButton) {
+
+    const book = getBook(copyButton.dataset.copy);
+
+    if (!book) return;
+
+    const priceSection = (() => {
+
+        const variants = book.variants || [];
+
+        if (!variants.length) return "";
+
+        const priceGroups = {};
+
+        variants.forEach(v => {
+            const price = Number(v.price);
+
+            if (!priceGroups[price]) {
+                priceGroups[price] = [];
+            }
+
+            priceGroups[price].push(v.label);
+        });
+
+        const prices = Object.keys(priceGroups);
+
+        if (prices.length === 1) {
+            return formatPrice(prices[0]);
+        }
+
+        const sorted = Object.entries(priceGroups)
+            .sort((a, b) => {
+    const countDiff = b[1].length - a[1].length;
+
+    if (countDiff !== 0) return countDiff;
+
+    return Number(a[0]) - Number(b[0]);
+});
+
+        const [mainPrice] = sorted[0];
+
+        const lines = [formatPrice(mainPrice)];
+
+        sorted.slice(1).forEach(([price, labels]) => {
+            lines.push(
+                `${labels.join(", ")} : ${formatPrice(price)}`
+            );
+        });
+
+        return lines.join("\n");
+    })();
+
+    const caption =
+`🇲🇾 《${book.title}》｜${book.author}
+${priceSection}
+
+${book.description || ""}
+
+#${book.title.replace(/[《》【】（）()\\s]/g, "")}
+#${book.author.replace(/\\s/g, "")}
+#马来西亚`;
+
+    await navigator.clipboard.writeText(caption);
+
+    alert("Caption copied!");
+    return;
+}
+
   if (editButton) {
     activeSection = "inventory";
     renderAdminSections();
     resetForm(getBook(editButton.dataset.edit));
-    window.scrollTo({ top: document.querySelector(".admin-panel").offsetTop - 12, behavior: "smooth" });
+    window.scrollTo({
+      top: document.querySelector(".admin-panel").offsetTop - 12,
+      behavior: "smooth"
+    });
   }
+
   if (deleteButton) {
+
     const bookId = deleteButton.dataset.delete;
-    state.books = state.books.filter((book) => book.id !== bookId);
-    state.cart = state.cart.filter((line) => line.bookId !== bookId);
+
+    state.books = state.books.filter(
+      (book) => book.id !== bookId
+    );
+
+    state.cart = state.cart.filter(
+      (line) => line.bookId !== bookId
+    );
+
     deleteCloudBook(bookId)
       .catch((error) => {
-        console.warn("Cloud delete failed:", error);
-        alert(`Cloud delete failed: ${error.message}`);
+        alert(error.message);
       })
       .finally(() => {
         resetForm();
@@ -1408,34 +1655,65 @@ els.sectionButtons.forEach((button) => {
 });
 
 els.variantRows.addEventListener("click", (event) => {
-  const button = event.target.closest(".remove-variant");
-  if (!button) return;
-  if (els.variantRows.children.length === 1) {
-    alert("Keep at least one variation.");
-    return;
-  }
-  button.closest(".variant-row").remove();
+
+    const photo =
+        event.target.closest(".variant-photo-box img");
+
+    if (!photo) return;
+
+    const row =
+        photo.closest(".variant-row");
+
+    const image =
+        row.querySelector(".variant-photo-data").value;
+
+    if (image) {
+        enlargePhoto(image);
+    }
+
 });
 
 els.variantRows.addEventListener("change", (event) => {
   const input = event.target.closest(".variant-photo-file");
   if (!input) return;
+
   const row = input.closest(".variant-row");
   const file = input.files?.[0];
   if (!file) return;
-  input.disabled = true;
-  uploadDisplayImage(file, "books")
-    .then((image) => {
-      row.querySelector(".variant-photo-data").value = image;
-      updateVariantPhotoPreview(row, image);
-    })
-    .catch((error) => {
-      console.error("Variation photo upload failed:", error);
-      alert(`Variation photo upload failed: ${error.message}`);
-    })
-    .finally(() => {
-      input.disabled = false;
-    });
+
+  readImageFile(file, async (image) => {
+    try {
+      const label = row.querySelector(".variant-label").value.trim();
+      const finalImage = await addVariationLabel(image, label);
+      const labelledFile = dataUrlToFile(finalImage, file.name);
+      const imageUrl = await uploadToStorage(labelledFile, "books");
+
+      row.querySelector(".variant-photo-data").value = imageUrl;
+      updateVariantPhotoPreview(row, imageUrl);
+    } catch (err) {
+      console.error("Variation photo upload failed:", err);
+      alert(`Variation photo upload failed: ${err.message}`);
+    }
+  });
+});
+
+els.addVariantBtn.addEventListener("click", () => {
+    addVariantRow();
+});
+
+els.variantRows.addEventListener("click", (event) => {
+
+    const removeBtn =
+        event.target.closest(".remove-variant");
+
+    if (!removeBtn) return;
+
+    const row =
+        removeBtn.closest(".variant-row");
+
+    if (!row) return;
+
+    row.remove();
 });
 
 els.bankRows.addEventListener("click", (event) => {
@@ -1446,8 +1724,36 @@ els.bankRows.addEventListener("click", (event) => {
 
 els.saveBookBtn.addEventListener("click", saveBook);
 els.saveBookBottomBtn.addEventListener("click", saveBook);
+els.applyBulkBtn.addEventListener("click", () => {
 
-els.addVariantBtn.addEventListener("click", () => addVariantRow({ label: "", price: "", stock: 1, sku: "" }));
+    const price = els.bulkPrice.value;
+    const stock = els.bulkStock.value;
+
+    document
+        .querySelectorAll(".variant-row")
+        .forEach(row => {
+
+            if (price !== "") {
+                row.querySelector(".variant-price").value = price;
+            }
+
+            if (stock !== "") {
+                row.querySelector(".variant-stock").value = stock;
+            }
+        });
+
+    els.bulkAssignModal.hidden = true;
+
+    els.bulkPrice.value = "";
+    els.bulkStock.value = "";
+});
+els.bulkAssignBtn.addEventListener("click", () => {
+    els.bulkAssignModal.hidden = false;
+});
+
+els.closeBulkBtn.addEventListener("click", () => {
+    els.bulkAssignModal.hidden = true;
+});
 els.addBankBtn.addEventListener("click", () => addBankRow());
 els.customerViewBtn.addEventListener("click", () => switchMode("customer"));
 els.logoutAdminBtn.addEventListener("click", () => {
@@ -1545,7 +1851,6 @@ els.qrImageInput.addEventListener("change", () => {
   const file = els.qrImageInput.files?.[0];
   readImageFile(file, (image) => {
     state.qrImage = image;
-    if (els.qrUrlInput) els.qrUrlInput.value = "";
     savePaymentSetup();
   });
 });
@@ -1556,61 +1861,32 @@ els.coverFileInput.addEventListener("change", async () => {
   if (!file) return;
 
   try {
-    els.coverFileInput.disabled = true;
-    const imageUrl = await uploadDisplayImage(file, "books");
+    const imageUrl = await uploadToStorage(file, "books");
 
     pendingCoverImage = imageUrl;
     els.coverDataInput.value = imageUrl;
-    if (els.coverInput) els.coverInput.value = imageUrl.startsWith("data:") ? "" : imageUrl;
 
     renderCoverPreview();
   } catch (err) {
     alert(err.message);
-  } finally {
-    els.coverFileInput.disabled = false;
   }
 });
-
-if (els.coverInput) {
-  els.coverInput.addEventListener("input", () => {
-    pendingCoverImage = (els.coverInput?.value || "").trim();
-    els.coverDataInput.value = pendingCoverImage;
-    renderCoverPreview();
-  });
-}
 
 els.clearCoverBtn.addEventListener("click", () => {
   pendingCoverImage = "";
   els.coverDataInput.value = "";
-  if (els.coverInput) els.coverInput.value = "";
   els.coverFileInput.value = "";
   renderCoverPreview();
 });
 
-if (els.qrUrlInput) {
-  els.qrUrlInput.addEventListener("input", () => {
-    state.qrImage = (els.qrUrlInput?.value || "").trim();
-    renderQrPreview();
-  });
-}
-
 els.clearQrBtn.addEventListener("click", () => {
   state.qrImage = "";
   els.qrImageInput.value = "";
-  if (els.qrUrlInput) els.qrUrlInput.value = "";
   savePaymentSetup();
 });
 
 els.savePaymentBtn.addEventListener("click", savePaymentSetup);
 els.savePaymentBottomBtn.addEventListener("click", savePaymentSetup);
-
-els.resetDemoBtn.addEventListener("click", () => {
-  localStorage.removeItem(STORAGE_KEY);
-  state = loadState();
-  currentOrder = null;
-  resetForm();
-  boot();
-});
 
 async function boot() {
   initSupabase();
@@ -1620,7 +1896,9 @@ async function boot() {
   }
   resetForm();
   renderPaymentSetup();
-  render();
+  els.catalogGrid.innerHTML =
+  '<p class="empty-state">Loading books...</p>';
+  enableVariantSorting();
   await loadCloudStore();
   render();
 }
@@ -1628,29 +1906,40 @@ async function boot() {
 boot();
 
 async function uploadToStorage(file, bucket) {
-  if (!cloud.enabled) throw new Error("Supabase is not configured.");
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const fileName = `${Date.now()}-${crypto.randomUUID()}-${safeName}`;
-  const encodedName = fileName.split("/").map(encodeURIComponent).join("/");
+  const safeName =
+  file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
 
+const fileName =
+  `${Date.now()}-${safeName}`;
+  
   const response = await fetch(
-    `${cloud.url}/storage/v1/object/${bucket}/${encodedName}`,
+    `${cloud.url}/storage/v1/object/${bucket}/${fileName}`,
     {
       method: "POST",
       headers: {
-        apikey: cloud.anonKey,
-        Authorization: `Bearer ${cloud.anonKey}`,
-        "Content-Type": file.type || "image/jpeg",
-        "x-upsert": "true"
-      },
+  apikey: cloud.anonKey,
+  Authorization: `Bearer ${cloud.anonKey}`,
+  "Content-Type": file.type || "application/octet-stream",
+  "x-upsert": "true"
+},
       body: file
     }
   );
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Upload failed (${response.status}): ${errorText || "Storage rejected the image"}`);
-  }
+if (!response.ok) {
 
-  return `${cloud.url}/storage/v1/object/public/${bucket}/${encodedName}`;
+  const errorText = await response.text();
+
+  console.error(
+    "Storage upload error:",
+    response.status,
+    errorText
+  );
+
+  throw new Error(
+    `Upload failed (${response.status}): ${errorText}`
+  );
+}
+
+  return `${cloud.url}/storage/v1/object/public/${bucket}/${fileName}`;
 }
