@@ -609,7 +609,7 @@ function renderAdminSections() {
 
 function renderPaymentSetup() {
   els.paymentCodeInput.value = state.paymentCode;
-  els.qrUrlInput.value = isRemoteImage(state.qrImage) ? state.qrImage : "";
+  if (els.qrUrlInput) els.qrUrlInput.value = isRemoteImage(state.qrImage) ? state.qrImage : "";
   renderQrPreview();
   renderBankRows();
 }
@@ -639,7 +639,7 @@ function resetForm(book = null) {
   els.titleInput.value = book?.title || "";
   els.authorInput.value = book?.author || "";
   els.categoryInput.value = book?.category || "";
-  els.coverInput.value = isRemoteImage(book?.cover) ? book.cover : "";
+  if (els.coverInput) els.coverInput.value = isRemoteImage(book?.cover) ? book.cover : "";
   els.coverFileInput.value = "";
   els.descriptionInput.value = book?.description || "";
   els.activeInput.checked = book?.active ?? true;
@@ -693,7 +693,7 @@ function collectBookFromForm() {
     title: els.titleInput.value.trim(),
     author: els.authorInput.value.trim(),
     category: els.categoryInput.value.trim() || "General",
-    cover: els.coverInput.value.trim() || els.coverDataInput.value.trim(),
+    cover: (els.coverInput?.value || "").trim() || els.coverDataInput.value.trim(),
     description: els.descriptionInput.value.trim(),
     color: colorFromTitle(els.titleInput.value),
     active: els.activeInput.checked,
@@ -1030,7 +1030,7 @@ function collectBankDetails() {
 
 async function savePaymentSetup() {
   state.paymentCode = els.paymentCodeInput.value.trim();
-  state.qrImage = els.qrUrlInput.value.trim() || state.qrImage || "";
+  state.qrImage = (els.qrUrlInput?.value || "").trim() || state.qrImage || "";
   state.bankDetails = collectBankDetails();
   try {
     await saveCloudSettings();
@@ -1095,7 +1095,7 @@ function hasValidAdminSession() {
 }
 
 function renderCoverPreview() {
-  const image = els.coverInput.value.trim() || els.coverDataInput.value.trim();
+  const image = (els.coverInput?.value || "").trim() || els.coverDataInput.value.trim();
   els.coverPreview.hidden = !image;
   els.coverEmptyText.hidden = Boolean(image);
   if (image) {
@@ -1545,7 +1545,7 @@ els.qrImageInput.addEventListener("change", () => {
   const file = els.qrImageInput.files?.[0];
   readImageFile(file, (image) => {
     state.qrImage = image;
-    els.qrUrlInput.value = "";
+    if (els.qrUrlInput) els.qrUrlInput.value = "";
     savePaymentSetup();
   });
 });
@@ -1561,7 +1561,7 @@ els.coverFileInput.addEventListener("change", async () => {
 
     pendingCoverImage = imageUrl;
     els.coverDataInput.value = imageUrl;
-    els.coverInput.value = imageUrl.startsWith("data:") ? "" : imageUrl;
+    if (els.coverInput) els.coverInput.value = imageUrl.startsWith("data:") ? "" : imageUrl;
 
     renderCoverPreview();
   } catch (err) {
@@ -1571,29 +1571,33 @@ els.coverFileInput.addEventListener("change", async () => {
   }
 });
 
-els.coverInput.addEventListener("input", () => {
-  pendingCoverImage = els.coverInput.value.trim();
-  els.coverDataInput.value = pendingCoverImage;
-  renderCoverPreview();
-});
+if (els.coverInput) {
+  els.coverInput.addEventListener("input", () => {
+    pendingCoverImage = (els.coverInput?.value || "").trim();
+    els.coverDataInput.value = pendingCoverImage;
+    renderCoverPreview();
+  });
+}
 
 els.clearCoverBtn.addEventListener("click", () => {
   pendingCoverImage = "";
   els.coverDataInput.value = "";
-  els.coverInput.value = "";
+  if (els.coverInput) els.coverInput.value = "";
   els.coverFileInput.value = "";
   renderCoverPreview();
 });
 
-els.qrUrlInput.addEventListener("input", () => {
-  state.qrImage = els.qrUrlInput.value.trim();
-  renderQrPreview();
-});
+if (els.qrUrlInput) {
+  els.qrUrlInput.addEventListener("input", () => {
+    state.qrImage = (els.qrUrlInput?.value || "").trim();
+    renderQrPreview();
+  });
+}
 
 els.clearQrBtn.addEventListener("click", () => {
   state.qrImage = "";
   els.qrImageInput.value = "";
-  els.qrUrlInput.value = "";
+  if (els.qrUrlInput) els.qrUrlInput.value = "";
   savePaymentSetup();
 });
 
